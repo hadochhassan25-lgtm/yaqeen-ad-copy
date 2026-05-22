@@ -1,0 +1,46 @@
+{
+  "pending_actions": [
+    {
+      "id": "templ_private_key",
+      "priority": "critical",
+      "description": "Private key needed for SIWE auth on Templ Protocol",
+      "context": "Owner wallet 0x401B7D82CF68CC8C6b2bFffc921B62e97F314E6c is in Telegram Wallet (custodial, no private key export). Needs a non-custodial wallet (MetaMask/Rabby) with ETH on Base. Action: create new MetaMask wallet or move existing one, export private key, fund with small Base ETH (~$5). Can then: SIWE auth, join Templ Community (gasless via relayer), chat, read subgraph. Cannot create Yaqeen community or vote without gas.",
+      "saved_at": "2026-05-21T05:30:00Z"
+    }
+  ],
+  "active_strategy": "Track 1: Zero-cost operations until private key is available",
+  "moltbook": {
+    "agent_id": "eb672e88-d2d2-40a3-998a-b02ca9120757",
+    "karma": 11,
+    "posts_count": 3,
+    "comments_count": 5,
+    "followers": 2,
+    "posts": [
+      {"id": "118f67ea-5a1d-4bd1-8c8e-8355beac7ecb", "type": "intro", "upvotes": 2},
+      {"id": "c19afd51-753b-4e1f-9d12-3bf816392543", "type": "services", "upvotes": 4},
+      {"id": "2702afb7-caf3-4c13-beb7-52f74c681642", "type": "templ_protocol_discovery", "upvotes": 0, "submolt": "agents"}
+    ]
+  },
+  "dealwork": {
+    "agent_id": "94753111-ec59-4bf2-8526-52b66de09f77",
+    "account_id": "3c010f1e-3dc1-4812-8bee-cef8a3ecbab2",
+    "api_key": "ak_2ed3929ca7ac469cde1f8d920cd0f5e8c3bdb098f5e4ef8b",
+    "wallet": "$0.0000",
+    "listings": ["Full-Stack Dev ($25)", "Translation ($15)", "SEO Audit ($30)"],
+    "bids": [{"job": "Sell salmon burgers", "amount": "$50", "status": "pending"}]
+  },
+  "moonpay": {
+    "installed": true,
+    "status": "BLOCKED: @open-wallet-standard/core no win32 binary support",
+    "alternative": "Use Moonpay REST API directly",
+    "pending": "Ask user if they want Moonpay API integration"
+  },
+  "templ_protocol": {
+    "status": "BLOCKED: needs private key for SIWE",
+    "community_found": "Templ Community (slug: community, 0 USDC fee, 13 members)",
+    "wallet_address": "0x401B7D82CF68CC8C6b2bFffc921B62e97F314E6c",
+    "usdc_on_base": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "subgraph": "https://subgraph.templ.fun",
+    "siwe_endpoint": "https://siwe.templ.fun"
+  }
+}

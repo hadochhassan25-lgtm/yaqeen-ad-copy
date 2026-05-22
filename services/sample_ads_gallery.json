@@ -1,0 +1,60 @@
+﻿{
+    "samples":  [
+                    {
+                        "caption":  "Your Coffee Shop game just leveled up.",
+                        "cta":  "Link in bio",
+                        "platform":  "instagram"
+                    },
+                    {
+                        "primary_text":  "Most Career switchers looking for tech jobs dont know they need smarter edtech marketing. Yet.",
+                        "headline":  "Why Career switchers looking for tech jobs Choose TechLearn Academy",
+                        "description":  "Built for Career switchers looking for tech jobs. TechLearn Academy delivers smarter edtech marketing without the headache.",
+                        "cta":  "Try It Now",
+                        "platform":  "facebook"
+                    },
+                    {
+                        "primary_text":  "Most Homeowners in Tetouan dont know they need smarter solar energy marketing. Yet.",
+                        "headline":  "smarter solar energy marketing — Made Simple",
+                        "description":  "Join 2151+ Homeowners in Tetouan who trust GreenRoof Solar. See results in days.",
+                        "cta":  "Book a Demo",
+                        "platform":  "facebook"
+                    },
+                    {
+                        "headline":  "Best Medina Tours for European tourists visiting Morocco",
+                        "description":  "Looking for smarter tourism marketing? Medina Tours helps European tourists visiting Morocco achieve results fast.",
+                        "platform":  "google"
+                    },
+                    {
+                        "caption":  "POV: You found FitHub Morocco for Busy professionals ages 25-45.",
+                        "cta":  "DM us",
+                        "platform":  "instagram"
+                    },
+                    {
+                        "headline":  "How Startup CTOs and engineering leads Achieve smarter enterprise software marketing",
+                        "body":  "Organizations using B2B SaaS Pro see 66% improvement.",
+                        "platform":  "linkedin"
+                    },
+                    {
+                        "caption":  "Your Beauty \u0026 Wellness game just leveled up.",
+                        "cta":  "Link in bio",
+                        "platform":  "instagram"
+                    },
+                    {
+                        "headline":  "Scaling Cloud Infrastructure? Heres Your Playbook",
+                        "body":  "Organizations using DevOpsFlow see 27% improvement.",
+                        "platform":  "linkedin"
+                    },
+                    {
+                        "primary_text":  "Most Online shoppers who hate cart abandonment dont know they need smarter e-commerce marketing. Yet.",
+                        "headline":  "Why Online shoppers who hate cart abandonment Choose SmartCart",
+                        "description":  "Built for Online shoppers who hate cart abandonment. SmartCart delivers smarter e-commerce marketing without the headache.",
+                        "cta":  "Get Started Free",
+                        "platform":  "facebook"
+                    },
+                    {
+                        "headline":  "EcoRide: smarter electric scooters marketing",
+                        "description":  "Looking for smarter electric scooters marketing? EcoRide helps University students in Rabat achieve results fast.",
+                        "platform":  "google"
+                    }
+                ]
+}

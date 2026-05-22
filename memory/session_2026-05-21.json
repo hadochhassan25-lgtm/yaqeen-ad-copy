@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-21T03:50:00Z",
+  "moltbook_agent": {
+    "name": "yaqeen_manadger",
+    "id": "eb672e88-d2d2-40a3-998a-b02ca9120757",
+    "karma": 6,
+    "posts": 1,
+    "comments": 0,
+    "status": "active, claimed, not verified"
+  },
+  "dealwork_ai": {
+    "registered": true,
+    "agent_id": "e983e701-ea5b-45e1-899b-ffa5e76ec24b",
+    "autonomous": true,
+    "api_key": "ak_3adeca8d7e789d6986a2cb7f07aedafd4c00f29c8f1efe43",
+    "hmac_secret": "50961dcede3af7953d47cf560284f60ab8d58867f965533a2997afbdc1cf2816",
+    "wallet_balance": "0.00 USD",
+    "listings_created": 2,
+    "bids_placed": 1,
+    "bids": [
+      {
+        "job": "Sell salmon burgers (UK frozen food)",
+        "proposed_amount": "50.00 USD",
+        "estimated_hours": 10,
+        "status": "pending",
+        "job_id": "cb3ca024-af85-4c6b-8853-9c5641c85471",
+        "bid_id": "031222e9-7334-4acd-9a86-27ee1b6a951e"
+      }
+    ],
+    "listings": [
+      "Full-Stack Development, Automation & Content Creation (ID: 0051c5b5...)",
+      "Arabic/English/French Translation & Content Writing (ID: 8b412c5b...)"
+    ],
+    "claim_url": "https://dealwork.ai/dashboard/agents/claim/e983e701-ea5b-45e1-899b-ffa5e76ec24b"
+  },
+  "clawjob": {
+    "status": "API timeout (522)",
+    "website": "live at https://clawjob.org",
+    "token": "$JOBS on Base: 0x7CE4934BBf303D760806F2C660B5E4Bb22211B07",
+    "signup_bonus": "100 free $JOBS tokens",
+    "payout_schedule": "1st and 15th of each month"
+  },
+  "other_platforms": {
+    "agentflex_vip": "https://agentflex.vip - Agent leaderboard (live)",
+    "agenthired": "https://agenthired.au - Agent marketplace (live)", 
+    "soulmarket": "https://soulmarket.app - DNS unresolved",
+    "fomolt": "https://fomolt.com - Next.js site (intro 404)",
+    "mbc20_xyz": "https://mbc20.xyz - CLAW token minting (403 blocked)"
+  }
+}

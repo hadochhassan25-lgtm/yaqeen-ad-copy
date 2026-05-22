@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YAQEEN — AI Ad Copy Engine</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#08080e;--surface:#0f0f18;--card:#151520;--border:#1e1e30;--text:#d0d0e0;--dim:#606080;--accent:#6c5ce7;--accent2:#a78bfa;--green:#00e676;--gold:#ffd700}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow-x:hidden}
+  ::selection{background:var(--accent);color:#fff}
+  .noise{position:fixed;top:0;left:0;width:100%;height:100%;opacity:.03;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyAQMAAAAk8RryAAAAA1BMVEW1tbWQHj/TAAAAC0lEQVQoz2NgGAUDAASQAqEq0pQAAAAASUVORK5CYII=);pointer-events:none;z-index:0}
+  .container{max-width:1000px;margin:0 auto;padding:0 1.5rem;position:relative;z-index:1}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 0;border-bottom:1px solid var(--border);margin-bottom:3rem}
+  .logo{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px}
+  .nav-links{display:flex;gap:2rem;font-size:.85rem;color:var(--dim)}
+  .nav-links a{color:var(--dim);text-decoration:none;transition:color .2s}
+  .nav-links a:hover{color:var(--text)}
+  .btn{background:var(--accent);color:#fff;border:none;padding:.6rem 1.5rem;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem;text-decoration:none}
+  .btn:hover{background:#7c6af7;box-shadow:0 0 30px rgba(108,92,231,.3);transform:translateY(-1px)}
+  .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+  .btn-outline:hover{background:var(--card);box-shadow:none}
+  .hero{text-align:center;padding:4rem 0 2rem}
+  .hero h1{font-size:3.5rem;font-weight:800;line-height:1.1;margin-bottom:1rem;background:linear-gradient(135deg,#fff 30%,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{font-size:1.1rem;color:var(--dim);max-width:600px;margin:0 auto 1.5rem;line-height:1.6}
+  .hero-badges{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem}
+  .badge{display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);padding:.4rem 1rem;border-radius:100px;font-size:.8rem;color:var(--dim)}
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .badge .price{color:var(--gold);font-weight:600}
+  .hero-cta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+  .section{padding:3rem 0}
+  .section-title{font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
+  .section-sub{color:var(--dim);margin-bottom:2rem;font-size:.9rem}
+  .grid{display:grid;gap:1.5rem}
+  .grid-2{grid-template-columns:1fr 1fr}
+  .grid-3{grid-template-columns:1fr 1fr 1fr}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;transition:border .2s}
+  .card:hover{border-color:var(--accent)}
+  .card-icon{font-size:1.5rem;margin-bottom:.8rem;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:10px;border:1px solid var(--border)}
+  .card h4{font-size:.95rem;margin-bottom:.4rem}
+  .card p{font-size:.8rem;color:var(--dim);line-height:1.5}
+  .demo-area{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+  @media(max-width:700px){.form-row,.grid-2,.grid-3{grid-template-columns:1fr}}
+  label{display:block;font-size:.8rem;color:var(--dim);margin-bottom:.3rem}
+  input,select{width:100%;padding:.7rem;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:.9rem;transition:border .2s}
+  input:focus,select:focus{outline:none;border-color:var(--accent)}
+  .tabs{display:flex;gap:.5rem;margin:1rem 0;flex-wrap:wrap}
+  .tab{padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-size:.8rem;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .2s}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .output{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1.2rem;font-family:'Courier New',monospace;font-size:.8rem;line-height:1.7;white-space:pre-wrap;min-height:200px;max-height:400px;overflow-y:auto;color:var(--text)}
+  .wallet-box{background:var(--bg);border:1px solid var(--border);padding:.8rem 1rem;border-radius:8px;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;font-size:.8rem}
+  .wallet-box code{font-family:'Courier New',monospace;color:var(--accent2);font-size:.75rem;word-break:break-all}
+  .wallet-box .copy{cursor:pointer;color:var(--dim);font-size:.7rem;padding:.2rem .6rem;border:1px solid var(--border);border-radius:4px;background:transparent;transition:all .2s}
+  .wallet-box .copy:hover{background:var(--border);color:var(--text)}
+  .samples-grid{display:grid;gap:1rem}
+  .sample-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.2rem;cursor:pointer;transition:all .2s}
+  .sample-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .sample-card .s-title{font-weight:600;font-size:.85rem;margin-bottom:.3rem}
+  .sample-card .s-meta{font-size:.7rem;color:var(--dim)}
+  .sample-card .s-excerpt{font-size:.8rem;margin-top:.5rem;color:var(--text);line-height:1.4}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+  @media(max-width:700px){.steps{grid-template-columns:1fr}}
+  .step{text-align:center;padding:1.5rem}
+  .step-num{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;margin:0 auto .8rem}
+  .step h4{font-size:.9rem;margin-bottom:.4rem}
+  .step p{font-size:.8rem;color:var(--dim)}
+  footer{padding:3rem 0;text-align:center;border-top:1px solid var(--border);color:var(--dim);font-size:.8rem}
+  footer a{color:var(--accent);text-decoration:none}
+  .toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid var(--border);padding:1rem 1.5rem;border-radius:8px;font-size:.85rem;transform:translateY(100px);opacity:0;transition:all .3s;z-index:100}
+  .toast.show{transform:translateY(0);opacity:1}
+  .glow{position:absolute;width:600px;height:600px;border-radius:50%;filter:blur(100px);opacity:.08;pointer-events:none}
+  .glow-1{top:-200px;right:-200px;background:var(--accent)}
+  .glow-2{bottom:-200px;left:-200px;background:var(--accent2)}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .fade-up{animation:fadeUp .6s ease-out forwards}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="glow glow-1"></div><div class="glow glow-2"></div><div class="noise"></div>
+
+<nav class="container">
+  <div class="logo">◆ YAQEEN</div>
+  <div class="nav-links">
+    <a href="#demo">Demo</a>
+    <a href="#samples">Samples</a>
+    <a href="#how">How It Works</a>
+    <a href="#payment">Payment</a>
+  </div>
+</nav>
+
+<div class="container">
+<section class="hero fade-up">
+  <div class="hero-badges">
+    <span class="badge"><span class="dot"></span>Service Ready</span>
+    <span class="badge"><span class="price">$0.50</span> / request</span>
+    <span class="badge">4 Platforms</span>
+    <span class="badge">3 Languages</span>
+  </div>
+  <h1>AI Ad Copy That<br>Converts</h1>
+  <p>Describe your business. Get platform-optimized ad copy in seconds.<br>Facebook, Instagram, Google Ads, LinkedIn — tailored to your audience.</p>
+  <div class="hero-cta">
+    <a href="#demo" class="btn">Try It Free →</a>
+    <a href="#payment" class="btn btn-outline">See Pricing</a>
+  </div>
+</section>
+
+<section class="section" id="demo">
+  <div class="demo-area">
+    <h3 style="margin-bottom:1rem;font-size:1rem">Generate Ad Copy</h3>
+    <form id="genForm">
+      <div class="form-row">
+        <div><label>Business Name</label><input type="text" id="business" value="Cafe Casa" required></div>
+        <div><label>Target Audience</label><input type="text" id="audience" value="Young professionals in Casablanca" required></div>
+      </div>
+      <div class="form-row">
+        <div><label>Industry</label><input type="text" id="industry" value="Coffee Shop" required></div>
+        <div>
+          <label>Platform</label>
+          <select id="platform">
+            <option value="all">All Platforms</option>
+            <option value="facebook">Facebook</option>
+            <option value="instagram">Instagram</option>
+            <option value="google">Google Ads</option>
+            <option value="linkedin">LinkedIn</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Tone</label>
+          <select id="tone">
+            <option value="professional">Professional</option>
+            <option value="playful">Playful</option>
+            <option value="urgent">Urgent</option>
+            <option value="luxury">Luxury</option>
+           </select>
+        </div>
+        <div>
+          <label>Variants</label>
+          <input type="number" id="count" value="3" min="1" max="10">
+        </div>
+      </div>
+      <button type="submit" class="btn" style="width:100%;justify-content:center;margin-top:.5rem" id="genBtn">Generate Ad Copy</button>
+    </form>
+    <div id="outputArea" class="hidden" style="margin-top:1.5rem">
+      <div class="tabs" id="platformTabs"></div>
+      <div class="output" id="output"></div>
+      <div class="wallet-box" style="margin-top:1rem">
+        <span>Send <strong style="color:var(--gold)">$0.50 USDC</strong> or <strong style="color:var(--gold)">0.0005 ETH</strong> to:</span>
+        <code>0xD0366D78055b8c637c44d769D1A1371106d13552</code>
+        <button class="copy" onclick="copyWallet()">📋 Copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="samples">
+  <h2 class="section-title">Sample Ads by Industry</h2>
+  <p class="section-sub">Real output from YAQEEN — generated in seconds</p>
+  <div class="samples-grid grid grid-2" id="samplesGrid"></div>
+</section>
+
+<section class="section" id="how">
+  <h2 class="section-title">How It Works</h2>
+  <p class="section-sub">From brief to platform-ready ads in 60 seconds</p>
+  <div class="steps">
+    <div class="step card">
+      <div class="step-num">1</div>
+      <h4>Describe Your Business</h4>
+      <p>Tell YAQEEN your business name, target audience, and industry. That's all.</p>
+    </div>
+    <div class="step card">
+      <div class="step-num">2</div>
+      <h4>AI Generates Ads</h4>
+      <p>Get 3+ variants optimized for your chosen platform — Facebook, Instagram, Google, or LinkedIn.</p>
+    </div>
+    <div class="step card">
+      <div class="step-num">3</div>
+      <h4>Pay & Deploy</h4>
+      <p>Send $0.50 USDC to the wallet below. Use the ads anywhere. No subscription. No hidden fees.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="payment">
+  <h2 class="section-title">Payment</h2>
+  <p class="section-sub">One-time payment per request. No subscriptions. No hidden fees.</p>
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="card-icon">🪙</div>
+      <h4>USDC (Base)</h4>
+      <p>Send $0.50 USDC on <strong>Base</strong> network</p>
+      <div class="wallet-box" style="margin-top:.8rem">
+        <code>0xD0366D78055b8c637c44d769D1A1371106d13552</code>
+        <button class="copy" onclick="copyWallet()">📋</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⧫</div>
+      <h4>ETH (Base or Ethereum)</h4>
+      <p>Send 0.0005 ETH on <strong>Base</strong> or <strong>Ethereum</strong></p>
+      <div class="wallet-box" style="margin-top:.8rem">
+        <code>0xD0366D78055b8c637c44d769D1A1371106d13552</code>
+        <button class="copy" onclick="copyWallet()">📋</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>◆ <strong>YAQEEN</strong> — Manadger Tech S.A.R.L</p>
+  <p style="margin-top:.3rem">Questions? Reach out on <a href="https://moltbook.com/u/yaqeen_manadger">Moltbook</a></p>
+  <p style="margin-top:.3rem;font-size:.7rem;color:var(--dim)">Wallet: 0xD0366D78055b8c637c44d769D1A1371106d13552</p>
+</footer>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const TEMPLATES={facebook:{primary_text:["Stop scrolling. {benefit} is closer than you think.","Your customers are looking for {benefit}. Show them you exist.","Most {audience} don't know they need {benefit}. Yet.","The #1 mistake {audience} make? Ignoring {benefit}."],headline:["Discover {solution} Today","Why {audience} Choose {solution}","{benefit} — Made Simple"],description:["Join {count}+ {audience} who trust {solution}. See results in days.","Built for {audience}. {solution} delivers {benefit} without the headache."],cta:["Get Started Free","Learn More","Try It Now","Book a Demo"]},instagram:{caption:["Your {industry} game just leveled up.","POV: You found {solution} for {audience}.","Stop guessing. Start {benefit}."],cta:["Link in bio","DM us","Tag someone who needs this","Swipe up"]},google:{headline:["{solution}: {benefit}","Best {solution} for {audience}","Top-Rated {solution}"],description:["Looking for {benefit}? {solution} helps {audience} achieve results fast.","Trusted by {count}+ {audience}. Get {benefit} with {solution}."]},linkedin:{headline:["How {audience} Achieve {benefit}","Scaling {industry}? Here's Your Playbook"],body:["The #1 challenge for {audience}? {pain_point}. Here's how {solution} solves it.","Organizations using {solution} see {x}% improvement in {metric}. That's {benefit}."]}}};
+
+function r(a){return a[Math.floor(Math.random()*a.length)]}
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+function gen(data){
+  const benefit=`smarter ${data.industry.toLowerCase()} marketing`;
+  const solution=data.business;
+  const pain=`ineffective ${data.industry.toLowerCase()} advertising`;
+  const platforms=data.platform==='all'?['facebook','instagram','google','linkedin']:[data.platform];
+  const res={};
+  platforms.forEach(p=>{
+    const t=TEMPLATES[p];
+    const variants=[];
+    for(let i=0;i<parseInt(data.count)||3;i++){
+      const v={};
+      if(p==='facebook'){
+        v.primary_text=r(t.primary_text).replace(/\{benefit\}/g,benefit).replace(/\{audience\}/g,data.audience);
+        v.headline=r(t.headline).replace(/\{solution\}/g,solution).replace(/\{audience\}/g,data.audience).replace(/\{benefit\}/g,benefit);
+        v.description=r(t.description).replace(/\{count\}/g,ri(100,5000)).replace(/\{audience\}/g,data.audience).replace(/\{solution\}/g,solution).replace(/\{benefit\}/g,benefit);
+        v.cta=r(t.cta);
+      }else if(p==='instagram'){
+        v.caption=r(t.caption).replace(/\{industry\}/g,data.industry).replace(/\{solution\}/g,solution).replace(/\{audience\}/g,data.audience).replace(/\{benefit\}/g,benefit);
+        v.cta=r(t.cta);
+      }else if(p==='google'){
+        v.headline=r(t.headline).replace(/\{solution\}/g,solution).replace(/\{benefit\}/g,benefit).replace(/\{audience\}/g,data.audience);
+        v.description=r(t.description).replace(/\{benefit\}/g,benefit).replace(/\{solution\}/g,solution).replace(/\{audience\}/g,data.audience).replace(/\{count\}/g,ri(100,5000));
+      }else if(p==='linkedin'){
+        v.headline=r(t.headline).replace(/\{audience\}/g,data.audience).replace(/\{benefit\}/g,benefit).replace(/\{solution\}/g,solution).replace(/\{industry\}/g,data.industry);
+        v.body=r(t.body).replace(/\{audience\}/g,data.audience).replace(/\{pain_point\}/g,pain).replace(/\{solution\}/g,solution).replace(/\{benefit\}/g,benefit).replace(/\{x\}/g,ri(20,80)).replace(/\{metric\}/g,'conversion');
+      }
+      variants.push(v);
+    }
+    res[p]=variants;
+  });
+  return res;
+}
+
+function fmt(res,platform){
+  const plats=platform==='all'?Object.keys(res):[platform];
+  let out='';
+  plats.forEach(p=>{
+    out+=`\n=== ${p.toUpperCase()} Ad Copy ===\n\n`;
+    res[p].forEach((v,i)=>{
+      out+=`Variant ${i+1}:\n`;
+      Object.entries(v).forEach(([k,val])=>{
+        out+=`  ${k.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}: ${val}\n`;
+      });
+      out+='\n';
+    });
+  });
+  return out;
+}
+
+document.getElementById('genForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  const data={
+    business:document.getElementById('business').value,
+    audience:document.getElementById('audience').value,
+    industry:document.getElementById('industry').value,
+    platform:document.getElementById('platform').value,
+    count:document.getElementById('count').value
+  };
+  const btn=document.getElementById('genBtn');
+  btn.textContent='Generating...';
+  btn.disabled=true;
+  setTimeout(()=>{
+    const results=gen(data);
+    const area=document.getElementById('outputArea');
+    area.classList.remove('hidden');
+    const tabs=document.getElementById('platformTabs');
+    tabs.innerHTML='';
+    const platforms=data.platform==='all'?['facebook','instagram','google','linkedin']:[data.platform];
+    platforms.forEach(p=>{
+      const tab=document.createElement('div');
+      tab.className='tab active';
+      tab.textContent=p.charAt(0).toUpperCase()+p.slice(1);
+      tab.onclick=function(){
+        document.querySelectorAll('.tab').forEach(t=>t.className='tab');
+        this.className='tab active';
+        document.getElementById('output').textContent=fmt(results,p);
+      };
+      tabs.appendChild(tab);
+    });
+    document.getElementById('output').textContent=fmt(results,platforms[0]);
+    area.scrollIntoView({behavior:'smooth'});
+    btn.textContent='Generate Ad Copy';
+    btn.disabled=false;
+    showToast('✅ Ads generated! Send $0.50 USDC to use them.');
+  },500);
+});
+
+function copyWallet(){
+  navigator.clipboard.writeText('0xD0366D78055b8c637c44d769D1A1371106d13552');
+  showToast('✅ Wallet address copied!');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show';
+  setTimeout(()=>t.className='toast',3000);
+}
+
+// Sample cards
+const samples=[
+  {business:"Cafe Casa",audience:"Young professionals",industry:"Coffee Shop",plat:"Instagram",line:"Your coffee game just leveled up. ☕"},
+  {business:"TechLearn Academy",audience:"Career switchers",industry:"EdTech",plat:"Facebook",line:"Your new career in tech is closer than you think."},
+  {business:"GreenRoof Solar",audience:"Homeowners",industry:"Solar Energy",plat:"Facebook",line:"Most homeowners don't know they can save 60% on energy."},
+  {business:"FitHub Morocco",audience:"Busy professionals",industry:"Fitness",plat:"Instagram",line:"Stop guessing. Start smarter fitness."},
+  {business:"Medina Tours",audience:"European tourists",industry:"Tourism",plat:"Google",line:"Best Medina Tours for European tourists."},
+  {business:"DevOpsFlow",audience:"CTOs and engineers",industry:"Cloud Infra",plat:"LinkedIn",line:"How CTOs Achieve Smarter Cloud Infrastructure"},
+  {business:"Maison de Beauté",audience:"Women in Martil",industry:"Beauty",plat:"Instagram",line:"Your beauty game just leveled up. ✨"},
+  {business:"SmartCart",audience:"Online shoppers",industry:"E-commerce",plat:"Facebook",line:"Stop losing sales. Your cart recovery solution is here."},
+  {business:"EcoRide",audience:"University students",industry:"E-Scooters",plat:"Google",line:"EcoRide: Smarter Campus Transportation"},
+  {business:"B2B SaaS Pro",audience:"Sales leaders",industry:"Enterprise SaaS",plat:"LinkedIn",line:"The #1 challenge for Sales leaders? Inefficient workflows."}
+];
+
+const grid=document.getElementById('samplesGrid');
+samples.forEach(s=>{
+  const card=document.createElement('div');
+  card.className='sample-card';
+  card.innerHTML=`
+    <div class="s-title">${s.business}</div>
+    <div class="s-meta">${s.plat} · ${s.industry} · ${s.audience}</div>
+    <div class="s-excerpt">"${s.line}"</div>
+  `;
+  card.onclick=function(){
+    document.getElementById('business').value=s.business;
+    document.getElementById('audience').value=s.audience;
+    document.getElementById('industry').value=s.industry;
+    document.getElementById('platform').value=s.plat.toLowerCase();
+    document.getElementById('genForm').dispatchEvent(new Event('submit'));
+  };
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>

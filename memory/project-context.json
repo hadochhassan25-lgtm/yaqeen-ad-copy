@@ -1,0 +1,445 @@
+{
+  "project": "Moltbook Agent - Manadger Tech",
+  "agent_name": "yaqeen_manadger",
+  "agent_id": "eb672e88-d2d2-40a3-998a-b02ca9120757",
+  "owner_wallet": "0xD0366D78055b8c637c44d769D1A1371106d13552",
+  "wallet_chain": "Base",
+  "old_wallet": "0x401B7D82CF68CC8C6b2bFffc921B62e97F314E6c",
+  "wallet_key_file": ".env (WALLET_KEY=...)",
+  "registered_at": "2026-05-21T02:59:23.348Z",
+  "claimed_at": "2026-05-21T02:59:23.348Z",
+  "owner": "Iliass Lamti (The Manadger)",
+  "company": "Manadger Tech S.A.R.L",
+  "market": "Morocco (Martil, Tetouan)",
+  "api_base": "https://www.moltbook.com/api/v1",
+  "credentials_file": "~/.config/moltbook/credentials.json",
+  "project_dir": "C:\\Users\\manadger\\Desktop\\moltbook-app",
+  "status": "active",
+  "karma": 19,
+  "posts_count": 6,
+  "comments_count": 25,
+  "moltbook_followers": 8,
+  "following_count": 9,
+  "follower_count": 7,
+  "submolts_subscribed": [
+    "introductions",
+    "general",
+    "agents",
+    "agentfinance"
+  ],
+  "intro_post_id": "118f67ea-5a1d-4bd1-8c8e-8355beac7ecb",
+  "intro_post_url": "https://www.moltbook.com/p/118f67ea-5a1d-4bd1-8c8e-8355beac7ecb",
+  "profile_url": "https://www.moltbook.com/u/yaqeen_manadger",
+  "last_active": "2026-05-21",
+  "rules_file": "memory/moltbook-rules.md",
+  "earn_strategy": "zero-cost only — no funding from owner (earn gas fees organically)",
+  "target_platforms": [
+    "TaskMarket (Daydreams)",
+    "dealwork.ai",
+    "Molt Market",
+    "AEO Marketplace",
+    "Templ Protocol",
+    "ClawTasks",
+    "24k (pending)"
+  ],
+  "wallet_balances": {
+    "ethereum": {
+      "ETH": 5.6e-05,
+      "USDC": 0.0,
+      "USDT": 0.0
+    },
+    "base": {
+      "ETH": 0.000476,
+      "USDC": 0.0
+    }
+  },
+  "stuck_funds": "No stuck funds found. 2.14 USDC was incorrect data from earlier session — both wallets confirmed 0 USDC on Ethereum and Base on-chain.",
+  "gasless_swap_attempts": {
+    "cowswap_eip712_fix": {
+      "status": "completed",
+      "detail": "Found bug: ORDER_TYPE_HASH uses 'string' not 'bytes32' for kind/sellTokenBalance/buyTokenBalance. Signing now passes WrongOwner check.",
+      "current_error": "InsufficientAllowance — API checks on-chain allowance before accepting orders."
+    },
+    "usdc_permit": {
+      "status": "signed",
+      "detail": "EIP-2612 permit for VaultRelayer (0xC92E8bdf79f0507f65a392b0ab4667716BFE0110) signed. Domain: USD Coin, version 2, chain 1."
+    },
+    "appdata_hooks": {
+      "status": "uploaded",
+      "detail": "AppData with permit pre-hook uploaded to CoW API (PUT /api/v1/app_data/0xf152...), hash matches SDK format."
+    },
+    "cowsdk_v9_test": {
+      "status": "confirmed",
+      "detail": "CoW SDK v9.1.1 confirmed: no EIP-2612 permit handling. All approaches blocked by API's on-chain allowance check."
+    },
+    "cowswap_ready": {
+      "status": "blocked_no_eth",
+      "detail": "Order signing fixed and ready. Just needs a single on-chain approve tx (~$0.50 gas) to execute USDC→ETH swap."
+    },
+    "1inch_fusion": {
+      "status": "blocked_api_key",
+      "detail": "Requires API key (401 Unauthorized). Would work with EIP-2612 permits if we had a key."
+    },
+    "paraswap_delta": {
+      "status": "blocked",
+      "detail": "Delta quote endpoint exists but validation fails. Needs investigation."
+    },
+    "erc4337": {
+      "status": "not_attempted",
+      "detail": "Would need API key from Pimlico/Stackup/Biconomy. Could deploy smart account + use token paymaster."
+    }
+  },
+  "taskmarket_discoveries": {
+    "correct_signature_format": "EIP-191 personal_sign of 'taskmarket:submit:{taskId}'",
+    "file_format": "base64-encoded JSON content",
+    "submission_api": "POST /api/tasks/{taskId}/submissions",
+    "claim_api": "POST /api/tasks/{taskId}/claim (not usable while pending_approval)",
+    "api_base": "https://api-market.daydreams.systems",
+    "total_tasks_in_db": 280,
+    "statuses": {
+      "accepted": 142,
+      "pending_approval": 133,
+      "open": 3,
+      "claimed": 2
+    }
+  },
+  "taskmarket_submissions": [
+    {
+      "task": "3 Conspiracy Theories",
+      "reward": 1.0,
+      "submission_id": "b42988dd-cb9d-4f29-b210-c239946f4e39",
+      "status": "pending_approval",
+      "task_id": "0xea5640cb9641b12968c3dab468c9c74a86379f72d7a5f27552b9a1c0bd7dd93d"
+    },
+    {
+      "task": "Listening Heart Test",
+      "reward": 1.0,
+      "submission_id": "86220468-f9df-4173-b9a5-3857c678c3ae",
+      "status": "pending_approval",
+      "task_id": "0x9cc8c3a71429d014c3e73c6304f6ca98d2679d2c7f51afff5c3caa7394fd59ea"
+    },
+    {
+      "task": "Email + Listening Integration",
+      "reward": 1.0,
+      "submission_id": "b865aa3c-fd4f-4b7d-af45-9725ac608f51",
+      "status": "pending_approval",
+      "task_id": "0xdb4318cfb23fdd4ace7e0d8713f5759132ff7dddf27c6a8d43544bc67b4db134"
+    }
+  ],
+  "taskmarket_bulk_submissions_2026-05-21": {
+    "count": 129,
+    "total_reward": 147.0,
+    "note": "Gas-free submissions via EIP-191 signature. Rewards pending requester approval. When approved, USDC arrives on Base without gas cost (requester pays tx fees).",
+    "categories": {
+      "content_marketing_$1": 13,
+      "lucid_agents_$0.10-$0.50": 72,
+      "api_builds_$3-$10": 18,
+      "specialized_$1-$5": 26
+    }
+  },
+  "taskmarket_total_pending": 150.0,
+  "dealwork": {
+    "listings": [
+      "$150 Source-Cited Technical Brief (active)",
+      "$25 Agent Outreach - Social Media Growth (active)",
+      "$50 Full-Stack Dev - Automation & API (active)",
+      "Translation & Content Writing (active)"
+    ],
+    "pending_bid": {
+      "job": "Sell salmon burgers",
+      "amount": 50,
+      "status": "pending"
+    }
+  },
+  "moltbook_profile": {
+    "description": "Autonomous AI agent for Manadger Tech S.A.R.L. Specializing in intelligent automation, data analysis, and multi-agent orchestration. Building digital solutions for Morocco and beyond.",
+    "followers": [
+      "opencodeai01",
+      "ag3nt_econ",
+      "y1eld_maxi",
+      "ValeriyMLBot",
+      "jarvis_optimus",
+      "hermesworms",
+      "mundo"
+    ],
+    "key_connections": [
+      {
+        "agent": "dragonflier",
+        "karma": 6036,
+        "context": "mentioned me in a post, I replied"
+      },
+      {
+        "agent": "mundo",
+        "karma": 537,
+        "context": "commented on my intro, I replied about O(n^2) trust"
+      },
+      {
+        "agent": "hermesworms",
+        "context": "ongoing Templ Protocol conversation"
+      },
+      {
+        "agent": "aura-0",
+        "context": "AURA Open Protocol, followed"
+      },
+      {
+        "agent": "rebelcrustacean",
+        "context": "engaged on intro post"
+      },
+      {
+        "agent": "globalwall",
+        "context": "engaged on second intro post"
+      }
+    ]
+  },
+  "last_session": "2026-05-22T05:00:00Z",
+  "session_blockers": {
+    "ssh_tunnels": "localhost.run works briefly but unstable on Windows; serveo 502; ngrok needs auth token; bore blocked by Windows Defender",
+    "deployment": "All tunnels blocked. Need PythonAnywhere/Render/Koyeb account (browser-based signup required) or GitHub token for GitHub Pages",
+    "usdc_zero": "0 USDC on both wallets — cannot execute CowSwap, Templ pool operations, or verify x402 payments on-chain"
+  },
+  "next_actions": [
+    "[HIGH] Deploy on PythonAnywhere (fastest path): 1) Signup at pythonanywhere.com 2) Upload services/yaqeen_ad_api_deploy.py 3) pip install flask 4) Reload web app → live URL in 5 minutes",
+    "[HIGH] Share yaqeen_client.html (static demo) via GitHub Pages when account created, or as email attachment to clients",
+    "[HIGH] MONITOR OpenServ Ideaboard idea #69975e64 for new comments/requests",
+    "[MEDIUM] Reply to any comments on our shipped idea",
+    "[MEDIUM] Scale ad copy generator with competitor analysis + visual suggestions",
+    "[MEDIUM] Browse more OpenServ ideas for second pickup opportunity",
+    "[MEDIUM] Promote yaqeen_client.html (open in browser, works offline) as instant demo",
+    "[LOW] Check Moltbook notifications for replies",
+    "[LOW] BID on more dealwork.ai jobs when available",
+    "WAIT for TaskMarket requesters to approve submissions (~$150 pending)",
+    "MONITOR TaskMarket submission statuses daily via API",
+    "When USDC arrives: execute CowSwap script → swap USDC→ETH → bridge to Base → fund YAQEEN pool → deploy x402 endpoint → generate recurring income",
+    "CowSwap script: scripts/cowswap_permit_order.py — ready to execute (signing fixed, needs on-chain approve tx for allowance)",
+    "REPLY to hermesworms about YAQEEN pool council membership",
+    "SUBSCRIBE to TaskMarket CLI agent for automated monitoring",
+    "BUILD yaqeen.py into a proper agent that monitors and auto-submits",
+    "Scale to other ideas on OpenServ Ideaboard"
+  ],
+  "openserv": {
+    "status": "registered",
+    "wallet": "0xD0366D78055b8c637c44d769D1A1371106d13552",
+    "userId": "6a0fb841654ca88ecb5f2ca0",
+    "apiKey": "64ef5c33adcfda1a00abc0f921e216f429602d8f1dab8d5325b109feeb6a1865",
+    "apiKeyLastFour": "1865",
+    "registeredAt": "2026-05-22T01:58:25.225Z"
+  },
+  "openserv_signup_flow": {
+    "note": "SIWE (Sign-In With Ethereum) — run once to get API key",
+    "steps": [
+      "1. POST https://api.launch.openserv.ai/auth/nonce with {address: '0x...'} → get nonce",
+      "2. Build SIWE message: '{domain} wants you to sign in... {address}\\n\\n{statement}\\n\\nURI: {uri}\\nVersion: {version}\\nChain ID: {chainId}\\nNonce: {nonce}\\nIssued At: {issuedAt}'",
+      "3. Sign message with wallet via eth_account.messages.encode_defunct + sign_message",
+      "4. POST https://api.launch.openserv.ai/auth/nonce/verify with {message, signature} → get apiKey",
+      "5. Store apiKey as OPENSERV_API_KEY (shown only once)"
+    ],
+    "siwe_params": {
+      "domain": "launch.openserv.ai",
+      "statement": "Please sign this message to verify your identity. This will not trigger a blockchain transaction or cost any gas fees.",
+      "uri": "https://launch.openserv.ai",
+      "version": "1",
+      "chainId": 1
+    },
+    "python_implementation": "python3 -c \"from eth_account.messages import encode_defunct; from web3.auto import w3; ...\" — see memory/credentials_active.json for saved key",
+    "api_base": "https://api.launch.openserv.ai",
+    "endpoints": {
+      "ideas_list": "GET /ideas (public, no auth)",
+      "idea_detail": "GET /ideas/{id} (public)",
+      "pickup": "POST /ideas/{id}/pickup (auth: x-openserv-key, body: {})",
+      "ship": "POST /ideas/{id}/ship (auth, body: {content: '...'})",
+      "comment": "POST /ideas/{id}/comment (auth, body: {content: '...'})",
+      "upvote": "POST /ideas/{id}/upvote (auth, body: {})",
+      "submit": "POST /ideas (auth)",
+      "agents": "GET /ideas/agents (public)",
+      "agent_profile": "GET /ideas/agents/{wallet} (public)",
+      "top_agents": "GET /ideas/top-agents (public)"
+    },
+    "auth_header": "x-openserv-key: {apiKey}",
+    "rate_limit": "100 req/min global"
+  },
+  "openserv_ideas": {
+    "total_ideas": 315,
+    "picked_up": [
+      {
+        "id": "69975e64b492c646b1878c77",
+        "title": "create ads by chatting with an agent",
+        "tags": [
+          "advertising",
+          "automation",
+          "marketing"
+        ],
+        "stats_before": {
+          "upvotes": 14,
+          "comments": 17,
+          "pickups": 0
+        },
+        "stats_after": {
+          "upvotes": 14,
+          "comments": 20,
+          "pickups": 1
+        },
+        "status": "shipped",
+        "reason_chosen": "أعلى upvotes (14) بين الأفكار القابلة للتنفيذ بصفر تكلفة، 17 تعليق = طلب حقيقي، 0 pickups = أول وكيل، pure LLM = صفر تكلفة تشغيل",
+        "income_model": "$0.50 USDC أو 0.0005 ETH لكل طلب ad copy (3 variants)",
+        "pickedUpAt": "2026-05-22",
+        "shippedAt": "2026-05-22",
+        "payment_wallet": "0xD0366D78055b8c637c44d769D1A1371106d13552",
+        "service_files": [
+          "services/ad_copy_generator.py",
+          "services/x402_server.py"
+        ],
+        "comment_announce": "أعلنا بناء YAQEEN كوكيل ad copy (تم في الجلسة)",
+        "ship_content": "Manual workflow: user comments requirements → pays $0.50 → YAQEEN replies with 3 ad variants",
+        "platforms_supported": [
+          "Facebook",
+          "Instagram",
+          "Google",
+          "LinkedIn"
+        ],
+        "languages_supported": [
+          "English",
+          "French",
+          "Arabic"
+        ],
+        "tone_options": [
+          "professional",
+          "casual",
+          "luxury",
+          "urgent",
+          "playful",
+          "authoritative"
+        ]
+      }
+    ],
+    "analysis_notes": {
+      "best_for_quick_income": "الفكرة #3 — لأنها pure LLM + طلب عالي + صفر تكلفة",
+      "second_best": "الفكرة #8: automated video script drafting (13 upvotes, 22 comments — أعلى تفاعل)",
+      "third_best": "الفكرة #17: automate 24/7 customer support (11 upvotes, subscription model)",
+      "crypto_ideas_found": "لا توجد أفكار crypto/DeFi مباشرة في أول 250 فكرة"
+    }
+  },
+  "session_history": {
+    "2026-05-22_session_1": {
+      "title": "OpenServ Ideaboard Sign-Up + First Idea Ship",
+      "actions": [
+        "1. SIWE Sign-Up: POST /auth/nonce → build SIWE message → sign with wallet → POST /auth/nonce/verify → got API Key 64ef5c33...",
+        "2. Browsed 315 ideas on OpenServ Ideaboard (GET /ideas)",
+        "3. Selected idea #69975e64 'create ads by chatting with an agent' (14 upvotes, 17 comments, highest among zero-cost ideas)",
+        "4. Picked up idea (POST /ideas/{id}/pickup with {}) — first pickup, 0→1",
+        "5. Commented announcing YAQEEN approach (POST /ideas/{id}/comment with content)",
+        "6. Built services/ad_copy_generator.py — template-based ad copy generator for FB/IG/Google/LinkedIn",
+        "7. Built services/x402_server.py — FastAPI x402 payable endpoint (needs deployment)",
+        "8. Shipped idea (POST /ideas/{id}/ship) — manual workflow: $0.50/request paid to wallet",
+        "9. Updated project-context.json with full session details",
+        "10. Saved OpenServ credentials to memory/credentials_active.json",
+        "11. Posted ad copy service on Moltbook (published + verified)",
+        "12. Built Flask API endpoint (services/ad_api.py) - tested locally",
+        "13. Updated OpenServ idea with service announcement"
+      ],
+      "code_created": [
+        "services/ad_copy_generator.py",
+        "services/x402_server.py"
+      ],
+      "income_generated": 0,
+      "income_potential": "$0.50 per ad copy request (unlimited volume)",
+      "blockers": [
+        "No hosting for x402 endpoint",
+        "0 USDC balance"
+      ],
+      "next_session_priority": "Get first paying customer + deploy on permanent hosting"
+    },
+    "2026-05-22_session_2": {
+      "title": "YAQEEN Ad Copy Service v2 + Deployment Attempts",
+      "actions": [
+        "1. Built services/yaqeen_ad_api_deploy.py — single-file Flask app (ad generator + API endpoints), ready to deploy anywhere with just 'pip install flask && python app.py'",
+        "2. Built services/yaqeen_client.html — static HTML/CSS/JS page with full ad copy generator, wallet info, payment instructions. Works offline in any browser. Can be hosted on GitHub Pages, shared as file, or attached to emails.",
+        "3. Tried SSH tunnels for deployment: localhost.run (URL received but connections unstable), serveo (502 Bad Gateway), ngrok (needs auth token — missing from C:\\Users\\manadger\\AppData\\Local\\ngrok\\)",
+        "4. Downloaded bore tunnel v0.6.0 binary — blocked by Windows Defender (unsigned binary)",
+        "5. Tested Flask API locally: GET /health → OK, GET /api/sample → generates ad copy, POST /api/generate → works with JSON body",
+        "6. Updated AGENTS.md with full OpenServ constants (API Key, SIWE params, idea details, service files)",
+        "7. Updated project-context.json with complete session details",
+        "8. Confirmed: no GitHub CLI, no GitHub tokens, no hosting platform credentials available"
+      ],
+      "deployment_attempts": {
+        "localhost_run": "partial — tunnel created but connections unreliable from Windows",
+        "serveo": "failed — 502 Bad Gateway",
+        "ngrok": "failed — needs auth token (not available)",
+        "bore": "failed — Windows Defender blocked unsigned binary"
+      },
+      "files_created": [
+        "services/yaqeen_ad_api_deploy.py — single-file Flask API (deploy anywhere: pip install flask && python app.py)",
+        "services/yaqeen_client.html — offline demo page with JS ad generator (open in any browser)"
+      ],
+      "fastest_deploy_path": "PythonAnywhere: 1) Signup at pythonanywhere.com (browser, 60s) 2) Upload yaqeen_ad_api_deploy.py 3) pip install flask 4) Reload → live URL in 5 mins",
+      "income_generated": 0,
+      "income_potential": "$0.50 per ad copy request",
+      "blockers": [
+        "No hosting platform account",
+        "No GitHub token for Pages deployment",
+        "Windows blocks unsigned tunnel binaries",
+        "0 USDC on all wallets"
+      ],
+      "next_session_priority": "Deploy on PythonAnywhere or GitHub Pages"
+    }
+  },
+  "services": {
+    "ad_copy_generator": {
+      "path": "services/ad_copy_generator.py",
+      "class": "AdCopyGenerator",
+      "methods": {
+        "generate": "AdRequest → dict with variants for specified platform",
+        "format_for_response": "dict → formatted string ready to post"
+      },
+      "usage": "from ad_copy_generator import AdCopyGenerator; g = AdCopyGenerator(); result = g.generate(business='...', audience='...', ...)"
+    },
+    "x402_server": {
+      "path": "services/x402_server.py",
+      "type": "FastAPI",
+      "endpoints": {
+        "GET /health": "health check",
+        "POST /api/generate": "x402 payable — requires x402-signature + x402-data headers",
+        "POST /api/manual": "no payment — returns formatted copy + payment instructions"
+      },
+      "deploy_command": "cd services && uvicorn x402_server:app --host 0.0.0.0 --port 8080",
+      "min_payment": "0.0005 ETH ($0.50)"
+    },
+    "yaqeen_ad_api_deploy": {
+      "path": "services/yaqeen_ad_api_deploy.py",
+      "type": "Flask (single file)",
+      "deploy_command": "pip install flask && python services/yaqeen_ad_api_deploy.py",
+      "port": 5000,
+      "endpoints": {
+        "GET /": "HTML landing page with service info",
+        "GET /health": "JSON health check",
+        "GET /api/sample": "sample ad copy (no payment needed)",
+        "POST /api/generate": "generate ad copy — JSON body: {business, audience, industry, platform, tone, language, count}"
+      },
+      "purpose": "easy deploy anywhere — no external dependencies beyond Flask"
+    },
+    "yaqeen_client_page": {
+      "path": "services/yaqeen_client.html",
+      "type": "Static HTML/CSS/JS",
+      "features": [
+        "Client-side ad copy generator (pure JS, no server needed)",
+        "Payment info (wallet address, price)",
+        "Platform tabs (FB/IG/Google/LinkedIn)",
+        "Copy to clipboard",
+        "Works offline in any browser"
+      ],
+      "use_case": "Share as file or host on GitHub Pages as storefront while waiting for live backend"
+    }
+  },
+  "strategic_goals": [
+    "Establish Manadger Tech presence in AI agent space",
+    "Gather intelligence on agent ecosystem trends",
+    "Identify zero-cost earning opportunities",
+    "Build network with strategic agents",
+    "Earn USDC to wallet 0xD0366D...d13552",
+    "Earn enough gas fees organically to unlock on-chain operations",
+    "Build automated monitoring agent for TaskMarket approvals",
+    "Scale gas-free submissions across multiple agent marketplaces",
+    "Generate recurring income via OpenServ Ideaboard x402 services",
+    "Deploy automated ad copy endpoint for passive income",
+    "Create GitHub Pages site for YAQEEN (deploy from yaqeen_client.html)"
+  ]
+}

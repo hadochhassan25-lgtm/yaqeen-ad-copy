@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YAQEEN — AI Ad Copy Generator</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --text: #c8c8d4;
+    --text-dim: #6b6b80;
+    --accent: #6c5ce7;
+    --accent-glow: rgba(108,92,231,0.3);
+    --green: #00e676;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .container { max-width: 900px; width: 100%; padding: 2rem; }
+  header {
+    text-align: center; padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-size: 2.5rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+  }
+  .subtitle {
+    color: var(--text-dim); margin-top: 0.5rem;
+    font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .badge {
+    display: inline-flex; gap: 0.5rem; align-items: center;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 0.5rem 1rem; border-radius: 100px; font-size: 0.8rem;
+    margin-top: 1rem;
+  }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .price-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent), transparent);
+    padding: 0.3rem 0.8rem; border-radius: 6px;
+    font-weight: 700; font-size: 0.85rem;
+    margin-left: 1rem;
+  }
+  main { display: grid; gap: 1.5rem; margin-top: 2rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem;
+  }
+  .card h3 { margin-bottom: 1rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); }
+  .form-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+  }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.3rem; }
+  input, select, textarea {
+    width: 100%; padding: 0.7rem; border-radius: 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-size: 0.9rem;
+    transition: border 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 100px; font-family: 'Courier New', monospace; font-size: 0.85rem; }
+  button {
+    background: var(--accent); color: white; border: none;
+    padding: 0.8rem 2rem; border-radius: 8px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: all 0.2s;
+    width: 100%;
+  }
+  button:hover { background: #7c6af7; box-shadow: 0 0 20px var(--accent-glow); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+  .output { white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; font-size: 0.8rem; color: var(--text-dim); }
+  .wallet { font-family: 'Courier New', monospace; font-size: 0.75rem; background: var(--bg); padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid var(--border); word-break: break-all; }
+  .copy-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text); padding: 0.4rem 0.8rem;
+    font-size: 0.75rem; width: auto; cursor: pointer; border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { background: var(--border); }
+  .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .tab {
+    padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;
+    font-size: 0.8rem; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim);
+    transition: all 0.2s;
+  }
+  .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .preview-btn {
+    display: inline-block;
+    background: transparent; border: 1px solid var(--accent);
+    color: var(--accent); padding: 0.2rem 0.6rem;
+    border-radius: 4px; font-size: 0.7rem; cursor: pointer;
+    margin-left: 0.5rem;
+  }
+  .preview-btn:hover { background: var(--accent); color: white; }
+  footer {
+    margin-top: 3rem; padding: 2rem 0; text-align: center;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim); font-size: 0.8rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 1rem 1.5rem; border-radius: 8px;
+    font-size: 0.85rem; transform: translateY(100px); opacity: 0;
+    transition: all 0.3s; z-index: 100;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .count-selector { display: flex; align-items: center; gap: 0.5rem; }
+  .count-selector input { width: 70px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="container">
+<header>
+  <div class="logo">YAQEEN</div>
+  <div class="subtitle">AI-Powered Ad Copy Engine</div>
+  <div class="badge">
+    <span class="dot"></span>
+    <span>Service Online</span>
+    <span class="price-tag">$0.50 USDC / request</span>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <h3>Generate Ad Copy</h3>
+    <form id="genForm">
+      <div class="form-row">
+        <div>
+          <label>Business Name</label>
+          <input type="text" id="business" placeholder="e.g. Cafe Casa" required>
+        </div>
+        <div>
+          <label>Target Audience</label>
+          <input type="text" id="audience" placeholder="e.g. Young professionals in Casablanca" required>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top: 1rem;">
+        <div>
+          <label>Industry</label>
+          <input type="text" id="industry" placeholder="e.g. Coffee shop" required>
+        </div>
+        <div>
+          <label>Platform</label>
+          <select id="platform">
+            <option value="facebook">Facebook</option>
+            <option value="instagram">Instagram</option>
+            <option value="google">Google Ads</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="all">All Platforms</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top: 1rem;">
+        <div>
+          <label>Tone</label>
+          <select id="tone">
+            <option value="professional">Professional</option>
+            <option value="playful">Playful</option>
+            <option value="urgent">Urgent</option>
+            <option value="luxury">Luxury</option>
+            <option value="educational">Educational</option>
+            <option value="provocative">Provocative</option>
+          </select>
+        </div>
+        <div>
+          <label>Language</label>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="ar">العربية</option>
+          </select>
+        </div>
+      </div>
+      <div class="count-selector" style="margin-top: 1rem;">
+        <label style="margin: 0;">Variants:</label>
+        <input type="number" id="count" value="3" min="1" max="10">
+      </div>
+      <button type="submit" id="genBtn" style="margin-top: 1rem;">
+        Generate Ad Copy
+      </button>
+    </form>
+  </div>
+
+  <div class="card" id="outputCard" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="margin: 0;">Generated Output</h3>
+      <button class="copy-btn" onclick="copyOutput()">📋 Copy</button>
+    </div>
+    <div class="tabs" id="platformTabs"></div>
+    <textarea id="output" class="output" readonly></textarea>
+    <div class="meta" style="margin-top: 1rem;">
+      <span>Send <strong>$0.50 USDC</strong> to:</span>
+      <span class="wallet">0xD0366D78055b8c637c44d769D1A1371106d13552</span>
+      <button class="copy-btn" onclick="copyWallet()">📋</button>
+    </div>
+    <div class="meta" style="margin-top: 0.5rem;">
+      <span>Or send <strong>0.0005 ETH</strong> (Base) to same wallet</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>How It Works</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+      <div style="text-align: center; padding: 0.5rem;">
+        <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">1️⃣</div>
+        <div style="font-weight: 600;">Fill Form</div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">Describe your business & target</div>
+      </div>
+      <div style="text-align: center; padding: 0.5rem;">
+        <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">2️⃣</div>
+        <div style="font-weight: 600;">Generate</div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">AI creates platform-optimized ads</div>
+      </div>
+      <div style="text-align: center; padding: 0.5rem;">
+        <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">3️⃣</div>
+        <div style="font-weight: 600;">Pay & Use</div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">Send $0.50 USDC & grab your copies</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>Powered by <strong>YAQEEN</strong> — Manadger Tech S.A.R.L</p>
+  <p style="margin-top: 0.5rem;">
+    <a href="https://moltbook.com/p/5af62bee-3378-4287-9b88-b140bde60020" target="_blank">Moltbook</a>
+    &nbsp;·&nbsp;
+    <a href="https://dealwork.ai" target="_blank">DealWork.ai</a>
+    &nbsp;·&nbsp;
+    <span style="color: var(--text-dim);">Wallet: 0xD0366D78...3552</span>
+  </p>
+</footer>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const TEMPLATES = {
+  facebook: {
+    primary_text: [
+      "Stop scrolling. {benefit} is closer than you think.",
+      "Your customers are looking for {benefit}. Show them you exist.",
+      "Most {audience} don't know they need {benefit}. Yet.",
+      "The #1 mistake {audience} make? Ignoring {benefit}."
+    ],
+    headline: ["Discover {solution} Today", "Why {audience} Choose {solution}", "{benefit} — Made Simple"],
+    description: ["Join {count}+ {audience} who trust {solution}. See results in days.",
+                  "Built for {audience}. {solution} delivers {benefit} without the headache."],
+    cta: ["Get Started Free", "Learn More", "Try It Now", "Book a Demo"]
+  },
+  instagram: {
+    caption: ["Your {industry} game just leveled up.",
+              "POV: You found {solution} for {audience}.",
+              "Stop guessing. Start {benefit}."],
+    cta: ["Link in bio", "DM us", "Tag someone who needs this", "Swipe up"]
+  },
+  google: {
+    headline: ["{solution}: {benefit}", "Best {solution} for {audience}", "Top-Rated {solution}"],
+    description: ["Looking for {benefit}? {solution} helps {audience} achieve results fast.",
+                  "Trusted by {count}+ {audience}. Get {benefit} with {solution}."]
+  },
+  linkedin: {
+    headline: ["How {audience} Achieve {benefit}", "Scaling {industry}? Here's Your Playbook"],
+    body: ["The #1 challenge for {audience}? {pain_point}. Here's how {solution} solves it.",
+           "Organizations using {solution} see {x}% improvement in {metric}. That's {benefit}."]
+  }
+};
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function generateAd(data) {
+  const benefit = `smarter ${data.industry.toLowerCase()} marketing`;
+  const solution = data.business;
+  const pain_point = `ineffective ${data.industry.toLowerCase()} advertising`;
+  const platforms = data.platform === 'all' ? ['facebook','instagram','google','linkedin'] : [data.platform];
+  const results = {};
+
+  platforms.forEach(platform => {
+    const tmpl = TEMPLATES[platform];
+    const variants = [];
+    for (let i = 0; i < parseInt(data.count) || 3; i++) {
+      const v = {};
+      if (platform === 'facebook') {
+        v.primary_text = rand(tmpl.primary_text).replace(/\{benefit\}/g, benefit).replace(/\{audience\}/g, data.audience);
+        v.headline = rand(tmpl.headline).replace(/\{solution\}/g, solution).replace(/\{audience\}/g, data.audience).replace(/\{benefit\}/g, benefit);
+        v.description = rand(tmpl.description).replace(/\{count\}/g, randInt(100,5000)).replace(/\{audience\}/g, data.audience).replace(/\{solution\}/g, solution).replace(/\{benefit\}/g, benefit);
+        v.cta = rand(tmpl.cta);
+      } else if (platform === 'instagram') {
+        v.caption = rand(tmpl.caption).replace(/\{industry\}/g, data.industry).replace(/\{solution\}/g, solution).replace(/\{audience\}/g, data.audience).replace(/\{benefit\}/g, benefit);
+        v.cta = rand(tmpl.cta);
+      } else if (platform === 'google') {
+        v.headline = rand(tmpl.headline).replace(/\{solution\}/g, solution).replace(/\{benefit\}/g, benefit).replace(/\{audience\}/g, data.audience);
+        v.description = rand(tmpl.description).replace(/\{benefit\}/g, benefit).replace(/\{solution\}/g, solution).replace(/\{audience\}/g, data.audience).replace(/\{count\}/g, randInt(100,5000));
+      } else if (platform === 'linkedin') {
+        v.headline = rand(tmpl.headline).replace(/\{audience\}/g, data.audience).replace(/\{benefit\}/g, benefit).replace(/\{solution\}/g, solution).replace(/\{industry\}/g, data.industry);
+        v.body = rand(tmpl.body).replace(/\{audience\}/g, data.audience).replace(/\{pain_point\}/g, pain_point).replace(/\{solution\}/g, solution).replace(/\{benefit\}/g, benefit).replace(/\{x\}/g, randInt(20,80)).replace(/\{metric\}/g, 'conversion').replace(/\{industry\}/g, data.industry);
+      }
+      variants.push(v);
+    }
+    results[platform] = variants;
+  });
+  return results;
+}
+
+function formatOutput(results, platform) {
+  const variants = platform === 'all' ? results['facebook'] : results[platform];
+  const p = platform.charAt(0).toUpperCase() + platform.slice(1);
+  let out = `=== ${p} Ad Copy ===\n\n`;
+  const data = platform === 'all' ? results : results[platform];
+  if (platform === 'all') {
+    Object.keys(results).forEach(pf => {
+      out += `--- ${pf.toUpperCase()} ---\n`;
+      results[pf].forEach((v, i) => {
+        out += `\nVariant ${i+1}:\n`;
+        Object.entries(v).forEach(([k, val]) => {
+          out += `  ${k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${val}\n`;
+        });
+      });
+      out += '\n';
+    });
+  } else {
+    variants.forEach((v, i) => {
+      out += `Variant ${i+1}:\n`;
+      Object.entries(v).forEach(([k, val]) => {
+        out += `  ${k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${val}\n`;
+      });
+      out += '\n';
+    });
+  }
+  return out;
+}
+
+document.getElementById('genForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const data = {
+    business: document.getElementById('business').value,
+    audience: document.getElementById('audience').value,
+    industry: document.getElementById('industry').value,
+    platform: document.getElementById('platform').value,
+    tone: document.getElementById('tone').value,
+    language: document.getElementById('language').value,
+    count: document.getElementById('count').value
+  };
+  const btn = document.getElementById('genBtn');
+  const origText = btn.textContent;
+  btn.textContent = 'Generating...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    const results = generateAd(data);
+    const card = document.getElementById('outputCard');
+    card.style.display = 'block';
+    const tabs = document.getElementById('platformTabs');
+    tabs.innerHTML = '';
+    const platforms = data.platform === 'all' ? ['facebook','instagram','google','linkedin'] : [data.platform];
+    platforms.forEach(p => {
+      const tab = document.createElement('div');
+      tab.className = 'tab active';
+      tab.textContent = p.charAt(0).toUpperCase() + p.slice(1);
+      tab.onclick = function() {
+        document.querySelectorAll('.tab').forEach(t => t.className = 'tab');
+        this.className = 'tab active';
+        document.getElementById('output').value = formatOutput(results, p);
+      };
+      tabs.appendChild(tab);
+    });
+    document.getElementById('output').value = formatOutput(results, platforms[0]);
+    card.scrollIntoView({ behavior: 'smooth' });
+    btn.textContent = origText;
+    btn.disabled = false;
+    showToast('Ad copy generated! Send $0.50 USDC to use it.');
+  }, 600);
+});
+
+function copyOutput() {
+  const text = document.getElementById('output').value;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'));
+}
+
+function copyWallet() {
+  navigator.clipboard.writeText('0xD0366D78055b8c637c44d769D1A1371106d13552').then(() => showToast('Wallet copied!'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  setTimeout(() => t.className = 'toast', 3000);
+}
+</script>
+</body>
+</html>

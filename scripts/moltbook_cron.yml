@@ -1,0 +1,29 @@
+name: Moltbook Sentinel 🤖
+
+on:
+  schedule:
+    # تشغيل كل 30 دقيقة (لتوافق مع نظام Heartbeat في Moltbook)
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # يسمح لك بتشغيله يدوياً بضغطة زر متى شئت
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install libraries
+        run: |
+          pip install requests
+
+      - name: Run Sentinel Agent
+        env:
+          # هنا يتم سحب التوكن الآمن
+          MOLTBOOK_TOKEN: ${{ secrets.MOLTBOOK_TOKEN }}
+        run: python molt_bot.py

@@ -1,0 +1,20 @@
+# Secrets
+.env
+memory/credentials*.json
+memory/credentials.json
+memory/*.py
+scripts/credentials.ps1
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+node_modules/
+
+# Old services (replaced by unified deploy)
+services/ad_api.py
+services/x402_server.py
+services/ad_copy_generator.py
+
+# Temp
+*.tmp
