@@ -346,6 +346,9 @@ def index():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>YAQEEN — AI Ad Copy + World News</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -358,10 +361,10 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
 .nav-links {{ display: flex; gap: 16px; align-items: center; }}
 .nav-links a {{ color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }}
 .nav-links a:hover {{ color: var(--accent); }}
-.nav-lang {{ display: flex; gap: 4px; margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--border); }}
-.nav-lang-btn {{ background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; transition: all .2s; line-height: 1; }}
-.nav-lang-btn:hover {{ color: var(--accent); background: rgba(255,107,53,.1); }}
-.nav-lang-btn.active {{ color: #fff; background: var(--accent); }}
+.nav-lang {{ display: flex; gap: 2px; margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--border); }}
+.nav-lang-btn {{ background: none; border: 1px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 6px; transition: all .2s; line-height: 1; font-family: inherit; font-weight: 500; white-space: nowrap; }}
+.nav-lang-btn:hover {{ color: var(--accent); border-color: var(--accent); background: rgba(255,107,53,.1); }}
+.nav-lang-btn.active {{ color: #fff; background: var(--accent); border-color: var(--accent); }}
 .tabs {{ display: flex; gap: 0; padding: 0 24px; background: rgba(10,10,15,.5); border-bottom: 1px solid var(--border); }}
 .tab {{ padding: 12px 24px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }}
 .tab:hover {{ color: var(--text); }}
@@ -516,25 +519,36 @@ function switchTab(name, el) {
     else document.querySelectorAll('.tab')[name==='news'?0:1].classList.add('active');
     if (name === 'news' && allArticles.length === 0) fetchNews('all');
 }
+// Pre-warm: silently warm up the server before showing UI
+fetch(API+'/api/news?lang=all').catch(function(){});
 async function fetchNews(lang) {
     const el = document.getElementById('newsContent');
-    el.innerHTML = '<div class="loading"><div class="spinner"></div><div>Fetching global news'+(retryCount>0?' (attempt '+(retryCount+1)+')':'')+'...</div></div>';
+    if (retryCount > 0) {
+        el.innerHTML = '<div class="loading"><div class="spinner"></div><div>⏳ Server is waking up... (attempt '+(retryCount+1)+'/3)</div><button class="retry-btn" onclick="retryCount=0;fetchNews(currentLang)" style="margin-top:16px;font-size:13px;padding:8px 20px">⟳ Retry Now</button></div>';
+    } else {
+        el.innerHTML = '<div class="loading"><div class="spinner"></div><div>🌐 Fetching global news...</div></div>';
+    }
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 55000);
+        const timeout = setTimeout(function(){ controller.abort(); }, 65000);
         const r = await fetch(API+'/api/news?lang='+lang, {signal: controller.signal});
         clearTimeout(timeout);
         const d = await r.json();
         allArticles = d.articles || [];
         retryCount = 0;
+        if (allArticles.length === 0) {
+            retryCount = 1;
+            setTimeout(function(){ fetchNews(lang); }, 8000);
+            el.innerHTML = '<div class="loading"><div class="spinner"></div><div>📡 Fetching news sources, retrying in 8s...</div></div>';
+            return;
+        }
         renderNews(allArticles);
     } catch(e) {
         retryCount++;
         if (retryCount < 3) {
-            setTimeout(() => fetchNews(lang), 5000);
-            el.innerHTML = '<div class="loading"><div class="spinner"></div><div>Server is warming up, retrying in 5s...</div></div>';
+            setTimeout(function(){ fetchNews(lang); }, 6000);
         } else {
-            el.innerHTML = '<div class="error-state"><h2>Still Loading</h2><p>First load takes 30-60s. Please wait or refresh.</p><button class="retry-btn" onclick="retryCount=0;fetchNews(\''+lang+'\')">⟳ Retry Now</button></div>';
+            el.innerHTML = '<div class="error-state"><h2>⏰ Server is Cold</h2><p>Click below to wake it up (takes 15-30s first time)</p><button class="retry-btn" onclick="retryCount=0;fetchNews(currentLang)">🔥 Wake Server</button><br><br><small>After this, everything loads instantly.</small></div>';
         }
     }
 }
@@ -614,9 +628,10 @@ function escAttr(s) { if (!s) return ''; return s.replace(/"/g,'&quot;').replace
     for (const k of LANG_ORDER) {
         if (!LANG_MAP[k]) continue;
         const btn = document.createElement('button'); btn.className = 'nav-lang-btn';
-        btn.textContent = LANG_MAP[k].flag;
-        btn.title = LANG_MAP[k].display;
-        btn.onclick = ()=>{ switchTab('news'); setLang(k, document.querySelector('.lang-btn[data-lang="'+k+'"]')||document.querySelector('.lang-btn')); };
+        btn.textContent = LANG_MAP[k].flag+' '+LANG_MAP[k].display.split(' ')[0];
+        btn.title = LANG_MAP[k].display + ' news';
+        btn.dataset.lang = k;
+        btn.onclick = (e)=>{ e.stopPropagation(); switchTab('news'); setLang(k, btn); };
         bar.appendChild(btn);
     }
 })();
@@ -625,6 +640,10 @@ function setLang(lang, btn) {
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.nav-lang-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+    else {
+        const nb = document.querySelector('.nav-lang-btn[data-lang="'+lang+'"]');
+        if (nb) nb.classList.add('active');
+    }
     fetchNews(lang);
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
