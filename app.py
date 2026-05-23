@@ -173,13 +173,19 @@ def fetch_all_news(fast=False):
     if len(NEWS_CACHE) > 0:
         return
     all_articles = []
-    max_sources = 2 if fast else 4
+    max_sources = 1 if fast else 4
+    rss_timeout = 3 if fast else 5
+    deadline = now + 7.5
     for lang_key, lang_data in ALL_SOURCES.items():
         if lang_key.startswith('_'):
             continue
+        if time.time() > deadline:
+            break
         for s in lang_data.get('sources', [])[:max_sources]:
+            if time.time() > deadline:
+                break
             try:
-                items = fetch_rss(s['url'], timeout=5)
+                items = fetch_rss(s['url'], timeout=rss_timeout)
                 for it in items:
                     it['source_name'] = s['name']
                     it['source_url'] = s['url']
@@ -295,7 +301,9 @@ def get_news():
     articles = NEWS_CACHE
     if lang and lang != 'all' and lang in ALL_SOURCES:
         articles = [a for a in articles if a.get('lang') == lang]
-    return jsonify({'success': True, 'count': len(articles), 'language': lang, 'articles': articles[:50], 'cached_at': datetime.now(timezone.utc).isoformat()})
+    resp = jsonify({'success': True, 'count': len(articles), 'language': lang, 'articles': articles[:50], 'cached_at': datetime.now(timezone.utc).isoformat()})
+    resp.headers['Cache-Control'] = 'public, s-maxage=120, max-age=60'
+    return resp
 
 @app.route('/api/refresh', methods=['POST'])
 def refresh_news():
@@ -335,8 +343,10 @@ def index():
     LANG_ORDER = ['en','fr','es','ar','zh']
     lang_opts = ''
     lang_json = ''
-    nav_lang_html = ''
     lang_bar_html = '<button class="lang-btn active" onclick="setLang(\'all\',this)">🌐 All</button>'
+    nav_dropdown_html = ''
+    first_flag = ''
+    first_short = 'EN'
     for k in LANG_ORDER:
         v = ALL_SOURCES.get(k)
         if not v:
@@ -344,9 +354,12 @@ def index():
         flag = v.get('flag','')
         disp = v.get('display',k)
         short = disp.split(' ')[0]
+        if not first_flag:
+            first_flag = flag
+            first_short = short
         lang_opts += '<option value="'+k+'">'+flag+' '+disp+'</option>'
         lang_json += '"'+k+'":{"display":"'+disp+'","flag":"'+flag+'"},'
-        nav_lang_html += '<button class="nav-lang-btn" data-lang="'+k+'" onclick="switchTab(\'news\');setLang(\''+k+'\',this)">'+flag+' '+short+'</button>'
+        nav_dropdown_html += '<button data-lang="'+k+'" onclick="switchTab(\'news\');setLang(\''+k+'\',this);document.getElementById(\'navLangDropdown\').classList.remove(\'open\')">'+flag+' '+disp+'</button>'
         lang_bar_html += '<button class="lang-btn" data-lang="'+k+'" onclick="setLang(\''+k+'\',this)">'+flag+' '+disp+'</button>'
     lang_json = lang_json.rstrip(',')
 
@@ -370,10 +383,14 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
 .nav-links {{ display: flex; gap: 16px; align-items: center; }}
 .nav-links a {{ color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }}
 .nav-links a:hover {{ color: var(--accent); }}
-.nav-lang {{ display: flex; gap: 2px; margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--border); }}
-.nav-lang-btn {{ background: none; border: 1px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 6px; transition: all .2s; line-height: 1; font-family: inherit; font-weight: 500; white-space: nowrap; }}
-.nav-lang-btn:hover {{ color: var(--accent); border-color: var(--accent); background: rgba(255,107,53,.1); }}
-.nav-lang-btn.active {{ color: #fff; background: var(--accent); border-color: var(--accent); }}
+.nav-lang {{ position: relative; margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--border); }}
+.nav-lang-btn {{ background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; font-size: 13px; padding: 4px 10px; border-radius: 6px; transition: all .2s; line-height: 1; font-family: inherit; font-weight: 500; }}
+.nav-lang-btn:hover {{ border-color: var(--accent); }}
+.nav-lang-dropdown {{ display: none; position: absolute; top: 100%; right: 0; margin-top: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; min-width: 140px; box-shadow: 0 8px 32px rgba(0,0,0,.4); z-index: 200; overflow: hidden; }}
+.nav-lang-dropdown.open {{ display: block; }}
+.nav-lang-dropdown button {{ display: block; width: 100%; text-align: left; background: none; border: none; color: var(--text-dim); padding: 8px 14px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all .1s; }}
+.nav-lang-dropdown button:hover {{ background: rgba(255,107,53,.1); color: var(--accent); }}
+.nav-lang-dropdown button.active {{ color: var(--accent); background: rgba(255,107,53,.08); border-left: 2px solid var(--accent); }}
 .tabs {{ display: flex; gap: 0; padding: 0 24px; background: rgba(10,10,15,.5); border-bottom: 1px solid var(--border); }}
 .tab {{ padding: 12px 24px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }}
 .tab:hover {{ color: var(--text); }}
@@ -447,7 +464,10 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
         <a href="#" onclick="switchTab('adcopy',this);return false">Ad Copy</a>
         <a href="/api">API</a>
         <a href="/health">Health</a>
-        <div class="nav-lang">''' + nav_lang_html + '''</div>
+        <div class="nav-lang">
+            <button class="nav-lang-btn" id="navLangBtn" onclick="document.getElementById('navLangDropdown').classList.toggle('open')">''' + first_flag + ' ' + first_short + ''' ▾</button>
+            <div class="nav-lang-dropdown" id="navLangDropdown">''' + nav_dropdown_html + '''</div>
+        </div>
     </div>
 </div>
 
@@ -618,12 +638,19 @@ function escAttr(s) { if (!s) return ''; return s.replace(/"/g,'&quot;').replace
 function setLang(lang, btn) {
     currentLang = lang;
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.nav-lang-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+    // update nav dropdown label
+    const info = LANG_MAP[lang];
+    if (info) {
+        document.getElementById('navLangBtn').textContent = info.flag+' '+info.display.split(' ')[0]+' ▾';
+    }
     fetchNews(lang);
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-document.addEventListener('click', e => { if (e.target.classList.contains('modal-overlay')) closeModal(); });
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('modal-overlay')) closeModal();
+    if (!e.target.closest('.nav-lang')) document.getElementById('navLangDropdown').classList.remove('open');
+});
 fetchNews('all');
 </script>
 </body>
