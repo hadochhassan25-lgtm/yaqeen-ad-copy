@@ -332,14 +332,23 @@ def rewrite():
 # ============ UI & SYSTEM ROUTES ============
 @app.route('/')
 def index():
+    LANG_ORDER = ['en','fr','es','ar','zh']
     lang_opts = ''
     lang_json = ''
-    for k, v in ALL_SOURCES.items():
-        if not k.startswith('_'):
-            lang_opts += f'<option value="{k}">{v.get("flag","")} {v.get("display",k)}</option>'
-            lang_json += f'"{k}":{{"display":"{v.get("display",k)}","flag":"{v.get("flag","")}"}},'
+    nav_lang_html = ''
+    lang_bar_html = '<button class="lang-btn active" onclick="setLang(\'all\',this)">🌐 All</button>'
+    for k in LANG_ORDER:
+        v = ALL_SOURCES.get(k)
+        if not v:
+            continue
+        flag = v.get('flag','')
+        disp = v.get('display',k)
+        short = disp.split(' ')[0]
+        lang_opts += '<option value="'+k+'">'+flag+' '+disp+'</option>'
+        lang_json += '"'+k+'":{"display":"'+disp+'","flag":"'+flag+'"},'
+        nav_lang_html += '<button class="nav-lang-btn" data-lang="'+k+'" onclick="switchTab(\'news\');setLang(\''+k+'\',this)">'+flag+' '+short+'</button>'
+        lang_bar_html += '<button class="lang-btn" data-lang="'+k+'" onclick="setLang(\''+k+'\',this)">'+flag+' '+disp+'</button>'
     lang_json = lang_json.rstrip(',')
-    LANG_ORDER = ['en','fr','es','ar','zh']
 
     return f'''<!DOCTYPE html>
 <html lang="en">
@@ -438,7 +447,7 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
         <a href="#" onclick="switchTab('adcopy',this);return false">Ad Copy</a>
         <a href="/api">API</a>
         <a href="/health">Health</a>
-        <div class="nav-lang" id="navLang"></div>
+        <div class="nav-lang">''' + nav_lang_html + '''</div>
     </div>
 </div>
 
@@ -448,7 +457,7 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
 </div>
 
 <div id="tab-news" class="tab-content active">
-    <div class="lang-bar" id="langBar"></div>
+    <div class="lang-bar">''' + lang_bar_html + '''</div>
     <div class="container">
         <div class="hero">
             <h1><span>Global Intelligence</span> · Any Language</h1>
@@ -519,36 +528,30 @@ function switchTab(name, el) {
     else document.querySelectorAll('.tab')[name==='news'?0:1].classList.add('active');
     if (name === 'news' && allArticles.length === 0) fetchNews('all');
 }
-// Pre-warm: silently warm up the server before showing UI
-fetch(API+'/api/news?lang=all').catch(function(){});
 async function fetchNews(lang) {
     const el = document.getElementById('newsContent');
-    if (retryCount > 0) {
-        el.innerHTML = '<div class="loading"><div class="spinner"></div><div>⏳ Server is waking up... (attempt '+(retryCount+1)+'/3)</div><button class="retry-btn" onclick="retryCount=0;fetchNews(currentLang)" style="margin-top:16px;font-size:13px;padding:8px 20px">⟳ Retry Now</button></div>';
-    } else {
-        el.innerHTML = '<div class="loading"><div class="spinner"></div><div>🌐 Fetching global news...</div></div>';
-    }
+    el.innerHTML = '<div class="loading"><div class="spinner"></div><div>'+(retryCount>0?'⏳ Server waking up... (attempt '+(retryCount+1)+'/3)':'🌐 Fetching global news...')+'</div><button class="retry-btn" onclick="retryCount=0;fetchNews(currentLang)" style="margin-top:16px;font-size:13px;padding:8px 20px">⟳ Click to retry</button></div>';
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(function(){ controller.abort(); }, 65000);
+        const timeout = setTimeout(function(){ controller.abort(); }, 75000);
         const r = await fetch(API+'/api/news?lang='+lang, {signal: controller.signal});
         clearTimeout(timeout);
         const d = await r.json();
         allArticles = d.articles || [];
         retryCount = 0;
         if (allArticles.length === 0) {
-            retryCount = 1;
+            retryCount++;
             setTimeout(function(){ fetchNews(lang); }, 8000);
-            el.innerHTML = '<div class="loading"><div class="spinner"></div><div>📡 Fetching news sources, retrying in 8s...</div></div>';
+            el.innerHTML = '<div class="loading"><div class="spinner"></div><div>📡 No articles yet, retrying...</div></div>';
             return;
         }
         renderNews(allArticles);
     } catch(e) {
         retryCount++;
-        if (retryCount < 3) {
+        if (retryCount < 5) {
             setTimeout(function(){ fetchNews(lang); }, 6000);
         } else {
-            el.innerHTML = '<div class="error-state"><h2>⏰ Server is Cold</h2><p>Click below to wake it up (takes 15-30s first time)</p><button class="retry-btn" onclick="retryCount=0;fetchNews(currentLang)">🔥 Wake Server</button><br><br><small>After this, everything loads instantly.</small></div>';
+            el.innerHTML = '<div class="error-state"><h2>⏰ Server Warming Up</h2><p>First load can take 20-40s. Click to try again.</p><button class="retry-btn" onclick="retryCount=0;fetchNews(currentLang)">🔥 Retry</button></div>';
         }
     }
 }
@@ -612,38 +615,11 @@ async function generateAdCopy() {
 }
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function escAttr(s) { if (!s) return ''; return s.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-(function buildLangBar() {
-    const bar = document.getElementById('langBar');
-    const allBtn = document.createElement('button'); allBtn.className = 'lang-btn active'; allBtn.textContent = '🌐 All';
-    allBtn.onclick = ()=>{ setLang('all', allBtn); }; bar.appendChild(allBtn);
-    for (const k of LANG_ORDER) {
-        if (!LANG_MAP[k]) continue;
-        const btn = document.createElement('button'); btn.className = 'lang-btn';
-        btn.textContent = LANG_MAP[k].flag+' '+LANG_MAP[k].display; btn.dataset.lang = k;
-        btn.onclick = (e)=>{ setLang(k, btn); }; bar.appendChild(btn);
-    }
-})();
-(function buildNavLang() {
-    const bar = document.getElementById('navLang');
-    for (const k of LANG_ORDER) {
-        if (!LANG_MAP[k]) continue;
-        const btn = document.createElement('button'); btn.className = 'nav-lang-btn';
-        btn.textContent = LANG_MAP[k].flag+' '+LANG_MAP[k].display.split(' ')[0];
-        btn.title = LANG_MAP[k].display + ' news';
-        btn.dataset.lang = k;
-        btn.onclick = (e)=>{ e.stopPropagation(); switchTab('news'); setLang(k, btn); };
-        bar.appendChild(btn);
-    }
-})();
 function setLang(lang, btn) {
     currentLang = lang;
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.nav-lang-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
-    else {
-        const nb = document.querySelector('.nav-lang-btn[data-lang="'+lang+'"]');
-        if (nb) nb.classList.add('active');
-    }
     fetchNews(lang);
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
