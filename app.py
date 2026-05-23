@@ -483,7 +483,7 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
             <h1><span>Global Intelligence</span> · Any Language</h1>
             <p>Aggregating and rewriting news from 60+ trusted sources across 5 languages.</p>
         </div>
-        <div id="newsContent"><div class="loading"><div class="spinner"></div><div>Fetching global news...</div></div></div>
+        <div id="newsContent"><div class="loading" id="initialLoading"><div class="spinner"></div><div>Fetching global news...</div><div style="margin-top:12px;font-size:12px;color:var(--text-dim)" id="debugStatus">loading...</div></div></div>
     </div>
 </div>
 
@@ -550,23 +550,31 @@ function switchTab(name, el) {
 }
 async function fetchNews(lang) {
     const el = document.getElementById('newsContent');
-    el.innerHTML = '<div class="loading"><div class="spinner"></div><div>'+(retryCount>0?'⏳ Server waking up... (attempt '+(retryCount+1)+'/3)':'🌐 Fetching global news...')+'</div><button class="retry-btn" onclick="retryCount=0;fetchNews(currentLang)" style="margin-top:16px;font-size:13px;padding:8px 20px">⟳ Click to retry</button></div>';
+    const d = document.getElementById('debugStatus');
+    function status(m){ if(d) d.textContent = m; }
+    el.innerHTML = '<div class="loading"><div class="spinner"></div><div>'+(retryCount>0?'⏳ Server waking up... (attempt '+(retryCount+1)+'/3)':'🌐 Fetching global news...')+'</div><button class="retry-btn" onclick="retryCount=0;fetchNews(currentLang)" style="margin-top:16px;font-size:13px;padding:8px 20px">⟳ Click to retry</button><div style="margin-top:12px;font-size:12px;color:var(--text-dim)" id="debugStatus">loading...</div></div>';
+    status('Fetching /api/news?lang='+lang+'...');
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(function(){ controller.abort(); }, 75000);
+        const timeout = setTimeout(function(){ controller.abort(); status('Timed out'); }, 75000);
         const r = await fetch(API+'/api/news?lang='+lang, {signal: controller.signal});
         clearTimeout(timeout);
-        const d = await r.json();
-        allArticles = d.articles || [];
+        if (!r.ok) { status('HTTP '+r.status); throw new Error('HTTP '+r.status); }
+        status('Parsing JSON...');
+        const j = await r.json();
+        allArticles = j.articles || [];
         retryCount = 0;
         if (allArticles.length === 0) {
             retryCount++;
             setTimeout(function(){ fetchNews(lang); }, 8000);
+            status('Empty response, retry '+retryCount);
             el.innerHTML = '<div class="loading"><div class="spinner"></div><div>📡 No articles yet, retrying...</div></div>';
             return;
         }
+        status('Rendering '+allArticles.length+' articles');
         renderNews(allArticles);
     } catch(e) {
+        status('Error: '+e.message);
         retryCount++;
         if (retryCount < 5) {
             setTimeout(function(){ fetchNews(lang); }, 6000);
