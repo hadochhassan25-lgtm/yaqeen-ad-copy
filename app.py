@@ -337,6 +337,11 @@ def rewrite():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+def _html_esc(s):
+    if not s: return ''
+    s = str(s).replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quot;').replace("'",'&#39;')
+    return s
+
 # ============ UI & SYSTEM ROUTES ============
 @app.route('/')
 def index():
@@ -362,6 +367,35 @@ def index():
         nav_dropdown_html += '<button data-lang="'+k+'" onclick="switchTab(\'news\');setLang(\''+k+'\',this);document.getElementById(\'navLangDropdown\').classList.remove(\'open\')">'+flag+' '+disp+'</button>'
         lang_bar_html += '<button class="lang-btn" data-lang="'+k+'" onclick="setLang(\''+k+'\',this)">'+flag+' '+disp+'</button>'
     lang_json = lang_json.rstrip(',')
+
+    # Try to fetch news for immediate display
+    if not NEWS_CACHE:
+        fetch_all_news(fast=True)
+    initial_articles = NEWS_CACHE[:50]
+    grid_html = ''
+    for a in initial_articles:
+        ld = ALL_SOURCES.get(a.get('lang', ''), {})
+        flag = ld.get('flag', '')
+        disp = ld.get('display', a.get('lang', ''))
+        title = _html_esc(a.get('title', ''))
+        summary = _html_esc((a.get('summary', '') or '')[:300])
+        source = _html_esc(a.get('source_name', ''))
+        link = a.get('link', '')
+        aid = a.get('id', '')
+        grid_html += '''<div class="card"><div class="card-badge">'''+flag+' '+disp+'''</div>
+<div class="card-title">'''+title+'''</div>
+<div class="card-summary">'''+summary+'''</div>
+<div class="card-meta"><span>'''+source+'''</span><div class="card-actions">
+<button class="card-btn" onclick="window.open(\''''+link+'''\',\'_blank\')">🔗 Open</button>
+<button class="card-btn primary" onclick="openModal(\''''+aid+'''\')">⟳ Rewrite</button>
+</div></div></div>'''
+
+    if grid_html:
+        news_section = '<div class="grid">'+grid_html+'</div>'
+    else:
+        news_section = '<div class="loading" id="initialLoading"><div class="spinner"></div><div>Fetching global news...</div><div id="debugStatus" style="margin-top:12px;font-size:12px;color:var(--text-dim)">connecting...</div></div>'
+
+    articles_json = json.dumps(initial_articles, ensure_ascii=False)
 
     return f'''<!DOCTYPE html>
 <html lang="en">
@@ -483,7 +517,7 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
             <h1><span>Global Intelligence</span> · Any Language</h1>
             <p>Aggregating and rewriting news from 60+ trusted sources across 5 languages.</p>
         </div>
-        <div id="newsContent"><div class="loading" id="initialLoading"><div class="spinner"></div><div>Fetching global news...</div><div style="margin-top:12px;font-size:12px;color:var(--text-dim)" id="debugStatus">loading...</div></div></div>
+        <div id="newsContent">''' + news_section + '''</div>
     </div>
 </div>
 
@@ -532,6 +566,7 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
     </div>
 </div>
 
+<script id="initialData" type="application/json">''' + articles_json + '''</script>
 <script>
 const API = '';
 let allArticles = [];
@@ -659,7 +694,17 @@ document.addEventListener('click', e => {
     if (e.target.classList.contains('modal-overlay')) closeModal();
     if (!e.target.closest('.nav-lang')) document.getElementById('navLangDropdown').classList.remove('open');
 });
-fetchNews('all');
+// Use server-embedded articles if available
+const initEl = document.getElementById('initialData');
+if (initEl) {
+    try { allArticles = JSON.parse(initEl.textContent) || []; } catch(e) {}
+}
+if (allArticles.length > 0) {
+    const ds = document.getElementById('debugStatus');
+    if (ds) ds.textContent = allArticles.length+' articles loaded';
+} else {
+    fetchNews('all');
+}
 </script>
 </body>
 </html>'''
