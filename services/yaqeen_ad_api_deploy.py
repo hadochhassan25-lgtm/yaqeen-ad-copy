@@ -7,9 +7,18 @@ Or deploy on PythonAnywhere/Render/Railway for free.
 import sys, io, os, json, random
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
+from pathlib import Path
 
 app = Flask(__name__)
+BASE = Path(__file__).resolve().parent.parent
+
+@app.after_request
+def cors(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    return response
 
 # ==================== AD COPY ENGINE ====================
 TEMPLATES = {
@@ -88,6 +97,10 @@ def format_result(result):
 
 @app.route('/')
 def index():
+    return send_from_directory(BASE, 'yaqeen.html')
+
+@app.route('/api')
+def api_index():
     return '''<h1>YAQEEN Ad Copy API</h1>
 <p>POST /api/generate with JSON: {business, audience, industry, platform, tone, language, count}</p>
 <p>GET /api/sample - Sample output</p>
