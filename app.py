@@ -406,6 +406,65 @@ def api_signout():
     return jsonify({'success': True, 'message': 'Signed out'})
 
 # ============ UI & SYSTEM ROUTES ============
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    if request.method == 'GET':
+        error = request.args.get('error', '')
+        return '''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Sign In — YAQEEN</title><style>
+body{font-family:'Inter',system-ui,sans-serif;background:#0a0a0f;color:#e8e8ee;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:20px}
+.box{background:#12121a;border:1px solid #1e1e30;border-radius:16px;max-width:400px;width:100%;padding:32px}
+h2{font-size:22px;margin-bottom:4px;margin-top:0}
+p{color:#8888a0;font-size:14px;margin-bottom:20px}
+label{display:block;font-size:13px;font-weight:500;margin-bottom:4px;color:#8888a0}
+input{width:100%;background:#0a0a0f;border:1px solid #1e1e30;color:#e8e8ee;padding:10px 16px;border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:16px;box-sizing:border-box}
+input:focus{outline:none;border-color:#ff6b35}
+button{width:100%;background:#ff6b35;border:none;color:#fff;padding:10px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
+button:hover{background:#e55a2b}
+.error{color:#e55a2b;font-size:13px;margin-bottom:12px;padding:8px 12px;background:rgba(229,90,43,.1);border-radius:6px;display:''' + ('block' if error else 'none') + '''}
+.center{margin-top:16px;text-align:center;font-size:13px;color:#8888a0}
+a{color:#ff6b35;text-decoration:none}
+.toggle{display:block;margin-top:12px;text-align:center;font-size:13px;color:#8888a0;cursor:pointer}
+</style></head><body><div class="box">
+<h2 id="t">Sign In</h2>
+<p id="s">Sign in to your YAQEEN account</p>
+<div class="error" id="e">''' + html.escape(error) + '''</div>
+<form id="f" action="/login" method="POST">
+<input name="email" id="email" type="email" placeholder="Email" autocomplete="email" required>
+<input name="password" id="password" type="password" placeholder="Password" autocomplete="current-password" required>
+<button type="submit" id="b">Sign In</button>
+</form>
+<div class="center"><a href="/">Back to Home</a></div>
+<div class="toggle" id="tg">Don't have an account? <strong>Sign Up</strong></div>
+</div>
+<script>
+let mode='signin';
+document.getElementById('tg').onclick=function(){
+mode=mode==='signin'?'signup':'signin';
+document.getElementById('t').textContent=mode==='signin'?'Sign In':'Sign Up';
+document.getElementById('s').textContent=mode==='signin'?'Sign in to your YAQEEN account':'Create a free account';
+document.getElementById('b').textContent=mode==='signin'?'Sign In':'Sign Up';
+document.getElementById('tg').innerHTML=mode==='signin'?'Don\'t have an account? <strong>Sign Up</strong>':'Already have an account? <strong>Sign In</strong>';
+};
+document.getElementById('f').onsubmit=async function(e){
+e.preventDefault();
+const btn=document.getElementById('b');
+const err=document.getElementById('e');
+const email=document.getElementById('email').value.trim();
+const pass=document.getElementById('password').value;
+if(!email||!pass){err.textContent='Email and password required';err.style.display='block';return;}
+btn.disabled=true;btn.textContent='...';err.style.display='none';
+try{const r=await fetch('/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:mode,email,password})});
+const d=await r.json();
+if(d.success){
+if(mode==='signup'){mode='signin';document.getElementById('t').textContent='Sign In';document.getElementById('b').textContent='Sign In';document.getElementById('s').textContent='Account created! Sign in below.';document.getElementById('tg').innerHTML='Don\'t have an account? <strong>Sign Up</strong>';btn.disabled=false;return;}
+window.location.href='/';
+}else{err.textContent=d.error||'Auth failed';err.style.display='block';}
+}catch(e){err.textContent='Network error';err.style.display='block';}
+btn.disabled=false;btn.textContent=mode==='signin'?'Sign In':'Sign Up';
+};
+</script>
+</body></html>'''
+
 @app.route('/')
 def index():
     LANG_ORDER = ['en','fr','es','ar','zh']
@@ -582,7 +641,7 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
             <div class="nav-lang-dropdown" id="navLangDropdown">''' + nav_dropdown_html + '''</div>
         </div>
         <div id="authSection">
-            <button class="nav-auth-btn" id="loginBtn">Sign In</button>
+            <a class="nav-auth-btn" id="loginBtn" href="/login" style="text-decoration:none;display:inline-flex;align-items:center">Sign In</a>
         </div>
     </div>
 </div>
