@@ -1,12 +1,16 @@
 import sys, io, os, json, random, hashlib, re, html
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import threading, time, requests
 
 app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET', 'yaqeen-manadger-secret-2026')
+app.permanent_session_lifetime = timedelta(days=7)
 BASE = Path(__file__).resolve().parent
+
+from services.supabase_client import sign_up, sign_in, get_profile, get_limits, update_usage
 
 # ============ FREE API KEYS ============
 LLM_API_BASE = 'https://aiapiv2.pekpik.com/v1'
@@ -259,6 +263,12 @@ def ad_copy_landing():
 
 @app.route('/api/generate', methods=['POST'])
 def generate():
+    at = session.get('access_token')
+    if not at:
+        return jsonify({'success': False, 'error': 'Please sign in first', 'needs_auth': True}), 401
+    usage = _check_usage(at, 'adcopy')
+    if not usage['ok']:
+        return jsonify({'success': False, 'error': usage['error'], **usage['limits']}), 403
     data = request.get_json()
     if not data:
         return jsonify({'success': False, 'error': 'Request body required'}), 400
@@ -277,6 +287,7 @@ def generate():
                 lines.append(f'{key.replace("_"," ").title()}: {val}')
             lines.append('')
         formatted = '\n'.join(lines)
+        update_usage(at, 'adcopies_used', 1)
         return jsonify({'success': True, 'data': {'formatted': formatted, 'raw': result, 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 0.50, 'amount_eth': 0.0005}}})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -320,8 +331,22 @@ def get_sources():
         result[k] = {'display': v.get('display', k), 'flag': v.get('flag', ''), 'source_count': len(v.get('sources', []))}
     return jsonify({'success': True, 'languages': result, 'total': len(NEWS_CACHE)})
 
+def _check_usage(at, action):
+    limits = get_limits(at)
+    if action == 'rewrite' and limits['rewrites_used'] >= limits['rewrites_limit']:
+        return {'ok': False, 'error': 'Daily rewrite limit reached ('+str(limits['rewrites_limit'])+'/day).', 'limits': limits}
+    if action == 'adcopy' and limits['adcopies_used'] >= limits['adcopies_limit']:
+        return {'ok': False, 'error': 'Daily ad copy limit reached ('+str(limits['adcopies_limit'])+'/day).', 'limits': limits}
+    return {'ok': True, 'limits': limits}
+
 @app.route('/api/rewrite', methods=['POST'])
 def rewrite():
+    at = session.get('access_token')
+    if not at:
+        return jsonify({'success': False, 'error': 'Please sign in first', 'needs_auth': True}), 401
+    usage = _check_usage(at, 'rewrite')
+    if not usage['ok']:
+        return jsonify({'success': False, 'error': usage['error'], **usage['limits']}), 403
     data = request.get_json()
     if not data:
         return jsonify({'success': False, 'error': 'Request body required'}), 400
@@ -333,6 +358,7 @@ def rewrite():
         return jsonify({'success': False, 'error': 'Text too short (min 20 chars)'}), 400
     try:
         rewritten = llm_rewrite(text, lang) or text
+        update_usage(at, 'rewrites_used', 1)
         return jsonify({'success': True, 'original': text[:1000], 'rewritten': rewritten, 'language': lang, 'service': 'YAQEEN News AI'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -341,6 +367,43 @@ def _html_esc(s):
     if not s: return ''
     s = str(s).replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quot;').replace("'",'&#39;')
     return s
+
+# ============ AUTH ROUTES ============
+@app.route('/auth', methods=['POST'])
+def auth():
+    action = request.json.get('action', '')
+    email = request.json.get('email', '').strip().lower()
+    password = request.json.get('password', '')
+    if not email or not password:
+        return jsonify({'success': False, 'error': 'Email and password required'}), 400
+    if action == 'signup':
+        result = sign_up(email, password)
+        if result['success']:
+            return jsonify({'success': True, 'message': 'Account created. You can now sign in.'})
+        return jsonify({'success': False, 'error': result.get('error', 'Signup failed')}), 400
+    result = sign_in(email, password)
+    if result['success']:
+        session['access_token'] = result['access_token']
+        session['refresh_token'] = result.get('refresh_token', '')
+        session['user_id'] = result['user_id']
+        session['email'] = result['email']
+        session.permanent = True
+        limits = get_limits(result['access_token'])
+        return jsonify({'success': True, 'user': {'email': result['email'], 'user_id': result['user_id']}, **limits})
+    return jsonify({'success': False, 'error': result.get('error', 'Login failed')}), 401
+
+@app.route('/api/me')
+def api_me():
+    at = session.get('access_token')
+    if not at:
+        return jsonify({'authenticated': False, 'error': 'Not logged in'})
+    limits = get_limits(at)
+    return jsonify({'authenticated': True, 'email': session.get('email', ''), **limits})
+
+@app.route('/api/signout', methods=['POST'])
+def api_signout():
+    session.clear()
+    return jsonify({'success': True, 'message': 'Signed out'})
 
 # ============ UI & SYSTEM ROUTES ============
 @app.route('/')
