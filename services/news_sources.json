@@ -1,0 +1,104 @@
+{
+  "_meta": {
+    "name": "YAQEEN World News Sources",
+    "version": "1.0",
+    "total_sources": 60,
+    "languages": {
+      "ar": "Arabic",
+      "en": "English",
+      "fr": "French",
+      "es": "Spanish",
+      "zh": "Chinese"
+    }
+  },
+  "ar": {
+    "display": "العربية",
+    "flag": "🇸🇦",
+    "sources": [
+      {"name": "Al Jazeera", "url": "https://www.aljazeera.net/xml/rss.xml"},
+      {"name": "BBC Arabic", "url": "https://www.bbc.com/arabic/index.xml"},
+      {"name": "France24 Arabic", "url": "https://www.france24.com/ar/rss"},
+      {"name": "RT Arabic", "url": "https://arabic.rt.com/rss/"},
+      {"name": "Al Arabiya", "url": "https://www.alarabiya.net/ar/rss.xml"},
+      {"name": "CNN Arabic", "url": "https://arabic.cnn.com/rss.xml"},
+      {"name": "Sky News Arabia", "url": "https://www.skynewsarabia.com/rss.xml"},
+      {"name": "DW Arabic", "url": "https://www.dw.com/ar/rss"},
+      {"name": "Al Mayadeen", "url": "https://www.almayadeen.net/rss.xml"},
+      {"name": "Russia Today Arabic", "url": "https://russia-now.com/rss/arabic/"},
+      {"name": "Al Sharq", "url": "https://al-sharq.com/rss"},
+      {"name": "Al Quds Al Arabi", "url": "https://www.alquds.co.uk/feed/"}
+    ]
+  },
+  "en": {
+    "display": "English",
+    "flag": "🇬🇧",
+    "sources": [
+      {"name": "BBC World", "url": "https://feeds.bbci.co.uk/news/world/rss.xml"},
+      {"name": "Reuters", "url": "https://www.reutersagency.com/feed/"},
+      {"name": "Associated Press", "url": "https://rsshub.app/apnews/topics/apf-topnews"},
+      {"name": "CNN World", "url": "http://rss.cnn.com/rss/edition_world.rss"},
+      {"name": "NYT World", "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"},
+      {"name": "The Guardian", "url": "https://www.theguardian.com/world/rss"},
+      {"name": "Al Jazeera English", "url": "https://www.aljazeera.com/xml/rss/all.xml"},
+      {"name": "France24 English", "url": "https://www.france24.com/en/rss"},
+      {"name": "DW English", "url": "https://rss.dw.com/xml/rss-en-all"},
+      {"name": "NPR World", "url": "https://feeds.npr.org/1001/rss.xml"},
+      {"name": "TechCrunch", "url": "https://techcrunch.com/feed/"},
+      {"name": "Wired", "url": "https://www.wired.com/feed/rss"}
+    ]
+  },
+  "fr": {
+    "display": "Français",
+    "flag": "🇫🇷",
+    "sources": [
+      {"name": "Le Monde", "url": "https://www.lemonde.fr/rss/une.xml"},
+      {"name": "France24", "url": "https://www.france24.com/fr/rss"},
+      {"name": "RFI", "url": "https://www.rfi.fr/fr/rss.xml"},
+      {"name": "Le Figaro", "url": "https://www.lefigaro.fr/rss/figaro_une.xml"},
+      {"name": "AFP", "url": "https://www.afp.com/rss.xml"},
+      {"name": "Libération", "url": "https://www.liberation.fr/feed/"},
+      {"name": "Les Echos", "url": "https://www.lesechos.fr/rss.xml"},
+      {"name": "Paris Match", "url": "https://www.parismatch.com/feed/rss"},
+      {"name": "TV5 Monde", "url": "https://www.tv5monde.com/feed.rss"},
+      {"name": "Jeune Afrique", "url": "https://www.jeuneafrique.com/feed/"},
+      {"name": "Le Point", "url": "https://www.lepoint.fr/rss.xml"},
+      {"name": "20 Minutes", "url": "https://www.20minutes.fr/feed/rss"}
+    ]
+  },
+  "es": {
+    "display": "Español",
+    "flag": "🇪🇸",
+    "sources": [
+      {"name": "El País", "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/el-pais/portada.xml"},
+      {"name": "BBC Mundo", "url": "https://www.bbc.com/mundo/index.xml"},
+      {"name": "CNN Español", "url": "https://cnnespanol.cnn.com/feed/"},
+      {"name": "El Mundo", "url": "https://www.elmundo.es/rss/elmundo.xml"},
+      {"name": "France24 Español", "url": "https://www.france24.com/es/rss"},
+      {"name": "DW Español", "url": "https://rss.dw.com/xml/rss-es-all"},
+      {"name": "La Vanguardia", "url": "https://www.lavanguardia.com/rss.xml"},
+      {"name": "ABC España", "url": "https://www.abc.es/rss/"},
+      {"name": "Clarín Argentina", "url": "https://www.clarin.com/rss/"},
+      {"name": "El Universal México", "url": "https://www.eluniversal.com.mx/rss.xml"},
+      {"name": "La Nación Argentina", "url": "https://www.lanacion.com.ar/rss.xml"},
+      {"name": "Marca", "url": "https://www.marca.com/rss.xml"}
+    ]
+  },
+  "zh": {
+    "display": "中文",
+    "flag": "🇨🇳",
+    "sources": [
+      {"name": "Xinhua", "url": "https://rsshub.app/xinhua/"},
+      {"name": "China Daily", "url": "https://www.chinadaily.com.cn/rss/world_rss.xml"},
+      {"name": "CGTN", "url": "https://www.cgtn.com/subscribe/rss/world.xml"},
+      {"name": "People's Daily", "url": "https://rsshub.app/people/english"},
+      {"name": "Global Times", "url": "https://www.globaltimes.cn/rss.xml"},
+      {"name": "South China Morning Post", "url": "https://www.scmp.com/rss/4/feed"},
+      {"name": "Sixth Tone", "url": "https://www.sixthtone.com/feed"},
+      {"name": "CRI English", "url": "https://english.cri.cn/rss/world.xml"},
+      {"name": "Shanghai Daily", "url": "https://www.shine.cn/feed/"},
+      {"name": "HK Standard", "url": "https://www.thestandard.com.hk/rss.php"},
+      {"name": "Macau Daily", "url": "https://macaodaily.com/feed/"},
+      {"name": "Taipei Times", "url": "https://www.taipeitimes.com/rss.xml"}
+    ]
+  }
+}

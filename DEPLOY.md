@@ -2,22 +2,24 @@
 
 ## Fastest Path: PythonAnywhere (5 minutes, free)
 
-1. **Go to** https://www.pythonanywhere.com/ → **Sign up** (free)
+1. **Go to** https://www.pythonanywhere.com/ → **Sign up** (free, no credit card)
 
-2. **Open a Bash console** and run:
+2. **Upload files** via Files tab:
+   - `services/yaqeen_ad_api_deploy.py` (main app)
+   - `requirements.txt`
+
+3. **Open a Bash console** and run:
    ```bash
-   pip install flask
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
    ```
-
-3. **Upload the file** `services/yaqeen_ad_api_deploy.py`:
-   - Files tab → Upload a file → Select the file
-   - Or create it via the editor (copy-paste the content)
 
 4. **Web tab** → Add a new web app → Manual configuration → Python 3.11
 
 5. **Set the WSGI handler**:
    - Edit `/var/www/yourusername_pythonanywhere_com_wsgi.py`
-   - Add:
+   - Replace with:
      ```python
      import sys
      path = '/home/yourusername'
@@ -25,8 +27,11 @@
          sys.path.append(path)
      from yaqeen_ad_api_deploy import app as application
      ```
+   - In the Web tab, set virtualenv to `/home/yourusername/venv`
 
 6. **Reload** → Your API is live at `https://yourusername.pythonanywhere.com/`
+
+7. **Verify**: Open `https://yourusername.pythonanywhere.com/health` in browser
 
 ## Second Option: Render (free, with GitHub)
 
