@@ -488,6 +488,22 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
 .nav-lang-dropdown button {{ display: block; width: 100%; text-align: left; background: none; border: none; color: var(--text-dim); padding: 8px 14px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all .1s; }}
 .nav-lang-dropdown button:hover {{ background: rgba(255,107,53,.1); color: var(--accent); }}
 .nav-lang-dropdown button.active {{ color: var(--accent); background: rgba(255,107,53,.08); border-left: 2px solid var(--accent); }}
+.nav-auth-btn {{ background: var(--accent); border: none; color: #fff; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .2s; margin-left: 8px; }}
+.nav-auth-btn:hover {{ background: #e55a2b; }}
+.nav-user {{ display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-dim); margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--border); }}
+.auth-modal {{ position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); z-index: 1001; display: none; align-items: center; justify-content: center; padding: 20px; }}
+.auth-modal.open {{ display: flex; }}
+.auth-box {{ background: var(--card); border: 1px solid var(--border); border-radius: 16px; max-width: 400px; width: 100%; padding: 32px; }}
+.auth-box h2 {{ font-size: 22px; margin-bottom: 4px; }}
+.auth-box p {{ color: var(--text-dim); font-size: 14px; margin-bottom: 20px; }}
+.auth-input {{ width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: 8px; font-size: 14px; font-family: inherit; margin-bottom: 12px; }}
+.auth-input:focus {{ outline: none; border-color: var(--accent); }}
+.auth-submit {{ width: 100%; background: var(--accent); border: none; color: #fff; padding: 10px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; }}
+.auth-submit:hover {{ background: #e55a2b; }}
+.auth-toggle {{ text-align: center; margin-top: 12px; font-size: 13px; color: var(--text-dim); cursor: pointer; }}
+.auth-toggle:hover {{ color: var(--accent); }}
+.auth-error {{ color: #e55a2b; font-size: 13px; margin-bottom: 8px; display: none; }}
+.usage-badge {{ display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 10px; background: rgba(255,107,53,.1); color: var(--accent); font-weight: 500; }}
 .tabs {{ display: flex; gap: 0; padding: 0 24px; background: rgba(10,10,15,.5); border-bottom: 1px solid var(--border); }}
 .tab {{ padding: 12px 24px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }}
 .tab:hover {{ color: var(--text); }}
@@ -565,6 +581,25 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
             <button class="nav-lang-btn" id="navLangBtn" onclick="document.getElementById('navLangDropdown').classList.toggle('open')">''' + first_flag + ' ' + first_short + ''' ▾</button>
             <div class="nav-lang-dropdown" id="navLangDropdown">''' + nav_dropdown_html + '''</div>
         </div>
+        <div id="authSection">
+            <button class="nav-auth-btn" id="loginBtn" onclick="openAuth()">Sign In</button>
+        </div>
+    </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="auth-modal" id="authModal">
+    <div class="auth-box">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+            <h2 id="authTitle">Sign In</h2>
+            <button style="background:none;border:none;color:var(--text-dim);font-size:24px;cursor:pointer" onclick="closeAuth()">&times;</button>
+        </div>
+        <p id="authSub">Sign in to your YAQEEN account</p>
+        <div class="auth-error" id="authError"></div>
+        <input class="auth-input" id="authEmail" type="email" placeholder="Email">
+        <input class="auth-input" id="authPass" type="password" placeholder="Password">
+        <button class="auth-submit" id="authSubmit" onclick="doAuth()">Sign In</button>
+        <div class="auth-toggle" id="authToggle" onclick="toggleAuthMode()">Don't have an account? <strong>Sign Up</strong></div>
     </div>
 </div>
 
@@ -752,9 +787,62 @@ function setLang(lang, btn) {
     }
     fetchNews(lang);
 }
+// ============ AUTH ============
+let authMode = 'signin';
+function openAuth() { document.getElementById('authModal').classList.add('open'); document.getElementById('authEmail').focus(); }
+function closeAuth() { document.getElementById('authModal').classList.remove('open'); document.getElementById('authError').style.display = 'none'; }
+function toggleAuthMode() {
+    authMode = authMode === 'signin' ? 'signup' : 'signin';
+    document.getElementById('authTitle').textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
+    document.getElementById('authSub').textContent = authMode === 'signin' ? 'Sign in to your YAQEEN account' : 'Create a free account';
+    document.getElementById('authSubmit').textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
+    document.getElementById('authToggle').innerHTML = authMode === 'signin' ? 'Don\'t have an account? <strong>Sign Up</strong>' : 'Already have an account? <strong>Sign In</strong>';
+    document.getElementById('authError').style.display = 'none';
+}
+function authSuccess(data) {
+    closeAuth();
+    const section = document.getElementById('authSection');
+    section.innerHTML = '<div class="nav-user">'+(data.user?.email||'')+' <span class="usage-badge">'+data.rewrites_used+'/'+data.rewrites_limit+'</span></div>';
+    document.getElementById('loginBtn')?.remove();
+}
+async function doAuth() {
+    const btn = document.getElementById('authSubmit');
+    const err = document.getElementById('authError');
+    const email = document.getElementById('authEmail').value.trim();
+    const pass = document.getElementById('authPass').value;
+    if (!email || !pass) { err.textContent = 'Email and password required'; err.style.display = 'block'; return; }
+    btn.disabled = true; btn.textContent = '...';
+    err.style.display = 'none';
+    try {
+        const r = await fetch('/auth', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:authMode, email, password})});
+        const d = await r.json();
+        if (d.success) {
+            if (authMode === 'signup') {
+                authMode = 'signin';
+                toggleAuthMode();
+                document.getElementById('authSub').textContent = 'Account created! Sign in below.';
+                btn.disabled = false; btn.textContent = 'Sign In';
+                return;
+            }
+            authSuccess(d);
+        } else {
+            err.textContent = d.error || 'Auth failed';
+            err.style.display = 'block';
+        }
+    } catch(e) { err.textContent = 'Network error'; err.style.display = 'block'; }
+    btn.disabled = false; btn.textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
+}
+async function checkAuth() {
+    try {
+        const r = await fetch('/api/me');
+        const d = await r.json();
+        if (d.authenticated) authSuccess(d);
+    } catch(e) {}
+}
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 document.addEventListener('click', e => {
     if (e.target.classList.contains('modal-overlay')) closeModal();
+    if (e.target.classList.contains('auth-modal')) closeAuth();
     if (!e.target.closest('.nav-lang')) document.getElementById('navLangDropdown').classList.remove('open');
 });
 // Use server-embedded articles if available
@@ -768,6 +856,7 @@ if (allArticles.length > 0) {
 } else {
     fetchNews('all');
 }
+checkAuth();
 </script>
 </body>
 </html>'''
