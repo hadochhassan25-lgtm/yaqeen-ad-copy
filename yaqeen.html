@@ -220,79 +220,37 @@
 <div id="toast" class="toast"></div>
 
 <script>
-const TEMPLATES={facebook:{primary_text:["Stop scrolling. {benefit} is closer than you think.","Your customers are looking for {benefit}. Show them you exist.","Most {audience} don't know they need {benefit}. Yet.","The #1 mistake {audience} make? Ignoring {benefit}."],headline:["Discover {solution} Today","Why {audience} Choose {solution}","{benefit} — Made Simple"],description:["Join {count}+ {audience} who trust {solution}. See results in days.","Built for {audience}. {solution} delivers {benefit} without the headache."],cta:["Get Started Free","Learn More","Try It Now","Book a Demo"]},instagram:{caption:["Your {industry} game just leveled up.","POV: You found {solution} for {audience}.","Stop guessing. Start {benefit}."],cta:["Link in bio","DM us","Tag someone who needs this","Swipe up"]},google:{headline:["{solution}: {benefit}","Best {solution} for {audience}","Top-Rated {solution}"],description:["Looking for {benefit}? {solution} helps {audience} achieve results fast.","Trusted by {count}+ {audience}. Get {benefit} with {solution}."]},linkedin:{headline:["How {audience} Achieve {benefit}","Scaling {industry}? Here's Your Playbook"],body:["The #1 challenge for {audience}? {pain_point}. Here's how {solution} solves it.","Organizations using {solution} see {x}% improvement in {metric}. That's {benefit}."]}}};
+const API = 'https://hodadoda.pythonanywhere.com';
 
-function r(a){return a[Math.floor(Math.random()*a.length)]}
-function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
-
-function gen(data){
-  const benefit=`smarter ${data.industry.toLowerCase()} marketing`;
-  const solution=data.business;
-  const pain=`ineffective ${data.industry.toLowerCase()} advertising`;
-  const platforms=data.platform==='all'?['facebook','instagram','google','linkedin']:[data.platform];
-  const res={};
-  platforms.forEach(p=>{
-    const t=TEMPLATES[p];
-    const variants=[];
-    for(let i=0;i<parseInt(data.count)||3;i++){
-      const v={};
-      if(p==='facebook'){
-        v.primary_text=r(t.primary_text).replace(/\{benefit\}/g,benefit).replace(/\{audience\}/g,data.audience);
-        v.headline=r(t.headline).replace(/\{solution\}/g,solution).replace(/\{audience\}/g,data.audience).replace(/\{benefit\}/g,benefit);
-        v.description=r(t.description).replace(/\{count\}/g,ri(100,5000)).replace(/\{audience\}/g,data.audience).replace(/\{solution\}/g,solution).replace(/\{benefit\}/g,benefit);
-        v.cta=r(t.cta);
-      }else if(p==='instagram'){
-        v.caption=r(t.caption).replace(/\{industry\}/g,data.industry).replace(/\{solution\}/g,solution).replace(/\{audience\}/g,data.audience).replace(/\{benefit\}/g,benefit);
-        v.cta=r(t.cta);
-      }else if(p==='google'){
-        v.headline=r(t.headline).replace(/\{solution\}/g,solution).replace(/\{benefit\}/g,benefit).replace(/\{audience\}/g,data.audience);
-        v.description=r(t.description).replace(/\{benefit\}/g,benefit).replace(/\{solution\}/g,solution).replace(/\{audience\}/g,data.audience).replace(/\{count\}/g,ri(100,5000));
-      }else if(p==='linkedin'){
-        v.headline=r(t.headline).replace(/\{audience\}/g,data.audience).replace(/\{benefit\}/g,benefit).replace(/\{solution\}/g,solution).replace(/\{industry\}/g,data.industry);
-        v.body=r(t.body).replace(/\{audience\}/g,data.audience).replace(/\{pain_point\}/g,pain).replace(/\{solution\}/g,solution).replace(/\{benefit\}/g,benefit).replace(/\{x\}/g,ri(20,80)).replace(/\{metric\}/g,'conversion');
-      }
-      variants.push(v);
-    }
-    res[p]=variants;
-  });
-  return res;
-}
-
-function fmt(res,platform){
-  const plats=platform==='all'?Object.keys(res):[platform];
-  let out='';
-  plats.forEach(p=>{
-    out+=`\n=== ${p.toUpperCase()} Ad Copy ===\n\n`;
-    res[p].forEach((v,i)=>{
-      out+=`Variant ${i+1}:\n`;
-      Object.entries(v).forEach(([k,val])=>{
-        out+=`  ${k.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}: ${val}\n`;
-      });
-      out+='\n';
-    });
-  });
-  return out;
-}
-
-document.getElementById('genForm').addEventListener('submit',function(e){
+document.getElementById('genForm').addEventListener('submit',async function(e){
   e.preventDefault();
-  const data={
-    business:document.getElementById('business').value,
-    audience:document.getElementById('audience').value,
-    industry:document.getElementById('industry').value,
-    platform:document.getElementById('platform').value,
-    count:document.getElementById('count').value
-  };
   const btn=document.getElementById('genBtn');
   btn.textContent='Generating...';
   btn.disabled=true;
-  setTimeout(()=>{
-    const results=gen(data);
+  try{
+    const platforms=document.getElementById('platform').value==='all'?['facebook','instagram','google','linkedin']:[document.getElementById('platform').value];
+    const allResults={};
+    for(const p of platforms){
+      const resp=await fetch(API+'/api/generate',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          business:document.getElementById('business').value,
+          audience:document.getElementById('audience').value,
+          industry:document.getElementById('industry').value,
+          platform:p,
+          count:document.getElementById('count').value
+        })
+      });
+      const json=await resp.json();
+      if(!json.success)throw new Error(json.error||'API error');
+      allResults[p]=json.data.raw.variants;
+    }
     const area=document.getElementById('outputArea');
     area.classList.remove('hidden');
     const tabs=document.getElementById('platformTabs');
     tabs.innerHTML='';
-    const platforms=data.platform==='all'?['facebook','instagram','google','linkedin']:[data.platform];
+    const firstP=platforms[0];
     platforms.forEach(p=>{
       const tab=document.createElement('div');
       tab.className='tab active';
@@ -300,17 +258,32 @@ document.getElementById('genForm').addEventListener('submit',function(e){
       tab.onclick=function(){
         document.querySelectorAll('.tab').forEach(t=>t.className='tab');
         this.className='tab active';
-        document.getElementById('output').textContent=fmt(results,p);
+        renderOutput(allResults,p);
       };
       tabs.appendChild(tab);
     });
-    document.getElementById('output').textContent=fmt(results,platforms[0]);
+    renderOutput(allResults,firstP);
     area.scrollIntoView({behavior:'smooth'});
-    btn.textContent='Generate Ad Copy';
-    btn.disabled=false;
-    showToast('✅ Ads generated! Send $0.50 USDC to use them.');
-  },500);
+    showToast('Ads generated live from YAQEEN API');
+  }catch(err){
+    showToast('Error: '+err.message);
+  }
+  btn.textContent='Generate Ad Copy';
+  btn.disabled=false;
 });
+
+function renderOutput(results,platform){
+  let out='';
+  out+=`\n=== ${platform.toUpperCase()} Ad Copy (Live) ===\n\n`;
+  results[platform].forEach((v,i)=>{
+    out+=`Variant ${i+1}:\n`;
+    Object.entries(v).forEach(([k,val])=>{
+      out+=`  ${k.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}: ${val}\n`;
+    });
+    out+='\n';
+  });
+  document.getElementById('output').textContent=out;
+}
 
 function copyWallet(){
   navigator.clipboard.writeText('0xD0366D78055b8c637c44d769D1A1371106d13552');
