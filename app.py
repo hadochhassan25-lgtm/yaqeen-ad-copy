@@ -151,12 +151,19 @@ def fetch_rss(url, timeout=8):
     except:
         return []
 
+def _cache_path():
+    p = Path('/tmp/news_cache.json')
+    if p.parent.exists():
+        return p
+    return CACHE_FILE
+
 def fetch_all_news():
     global NEWS_CACHE
     now = time.time()
+    cache_file = _cache_path()
     try:
-        if CACHE_FILE.exists():
-            with open(CACHE_FILE, 'r', encoding='utf-8') as f:
+        if cache_file.exists():
+            with open(cache_file, 'r', encoding='utf-8') as f:
                 cached = json.load(f)
             if now - cached.get('_ts', 0) < CACHE_TTL:
                 NEWS_CACHE = [a for a in cached.get('articles', []) if a.get('title')]
@@ -190,7 +197,7 @@ def fetch_all_news():
     deduped.sort(key=lambda x: x.get('published', ''), reverse=True)
     NEWS_CACHE = deduped[:200]
     try:
-        with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+        with open(_cache_path(), 'w', encoding='utf-8') as f:
             json.dump({'_ts': now, 'articles': deduped[:200]}, f, ensure_ascii=False)
     except:
         pass
@@ -281,6 +288,8 @@ def sample():
 # ============ NEWS ROUTES ============
 @app.route('/api/news')
 def get_news():
+    if not NEWS_CACHE:
+        fetch_all_news()
     lang = request.args.get('lang', 'all')
     articles = NEWS_CACHE
     if lang and lang != 'all' and lang in ALL_SOURCES:
@@ -618,9 +627,12 @@ def bg_loop():
         NEWS_CACHE.clear()
         fetch_all_news()
 
+# Initialize on import (for Vercel serverless cold starts)
+fetch_keys()
+t = threading.Thread(target=bg_loop, daemon=True)
+t.start()
+
 if __name__ == '__main__':
-    t = threading.Thread(target=bg_loop, daemon=True)
-    t.start()
     port = int(os.getenv('PORT', 5000))
     print(f'YAQEEN AI Platform running on http://0.0.0.0:{port}')
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
