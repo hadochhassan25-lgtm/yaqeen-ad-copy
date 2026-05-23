@@ -157,7 +157,7 @@ def _cache_path():
         return p
     return CACHE_FILE
 
-def fetch_all_news():
+def fetch_all_news(fast=False):
     global NEWS_CACHE
     now = time.time()
     cache_file = _cache_path()
@@ -173,10 +173,11 @@ def fetch_all_news():
     if len(NEWS_CACHE) > 0:
         return
     all_articles = []
+    max_sources = 2 if fast else 4
     for lang_key, lang_data in ALL_SOURCES.items():
         if lang_key.startswith('_'):
             continue
-        for s in lang_data.get('sources', [])[:4]:
+        for s in lang_data.get('sources', [])[:max_sources]:
             try:
                 items = fetch_rss(s['url'], timeout=5)
                 for it in items:
@@ -289,12 +290,18 @@ def sample():
 @app.route('/api/news')
 def get_news():
     if not NEWS_CACHE:
-        fetch_all_news()
+        fetch_all_news(fast=True)
     lang = request.args.get('lang', 'all')
     articles = NEWS_CACHE
     if lang and lang != 'all' and lang in ALL_SOURCES:
         articles = [a for a in articles if a.get('lang') == lang]
     return jsonify({'success': True, 'count': len(articles), 'language': lang, 'articles': articles[:50], 'cached_at': datetime.now(timezone.utc).isoformat()})
+
+@app.route('/api/refresh', methods=['POST'])
+def refresh_news():
+    NEWS_CACHE.clear()
+    fetch_all_news()
+    return jsonify({'success': True, 'count': len(NEWS_CACHE), 'message': 'News cache refreshed'})
 
 @app.route('/api/sources')
 def get_sources():
@@ -348,9 +355,13 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
 .nav {{ position: sticky; top: 0; z-index: 100; background: rgba(10,10,15,.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }}
 .nav-logo {{ font-size: 20px; font-weight: 800; color: var(--accent); }}
 .nav-logo span {{ color: var(--gold); }}
-.nav-links {{ display: flex; gap: 16px; }}
+.nav-links {{ display: flex; gap: 16px; align-items: center; }}
 .nav-links a {{ color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }}
 .nav-links a:hover {{ color: var(--accent); }}
+.nav-lang {{ display: flex; gap: 4px; margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--border); }}
+.nav-lang-btn {{ background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; transition: all .2s; line-height: 1; }}
+.nav-lang-btn:hover {{ color: var(--accent); background: rgba(255,107,53,.1); }}
+.nav-lang-btn.active {{ color: #fff; background: var(--accent); }}
 .tabs {{ display: flex; gap: 0; padding: 0 24px; background: rgba(10,10,15,.5); border-bottom: 1px solid var(--border); }}
 .tab {{ padding: 12px 24px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }}
 .tab:hover {{ color: var(--text); }}
@@ -408,6 +419,11 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
 .modal .rewrite-btn:disabled {{ opacity: .5; cursor: wait; }}
 .footer {{ text-align: center; padding: 32px 24px; color: var(--text-dim); font-size: 13px; border-top: 1px solid var(--border); margin-top: 40px; }}
 .footer a {{ color: var(--accent); text-decoration: none; }}
+.error-state {{ text-align: center; padding: 60px 20px; color: var(--text-dim); }}
+.error-state h2 {{ color: var(--accent); margin-bottom: 8px; font-size: 20px; }}
+.error-state p {{ font-size: 14px; margin-bottom: 16px; }}
+.retry-btn {{ background: var(--accent); border: none; color: #fff; padding: 10px 28px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; transition: background .2s; }}
+.retry-btn:hover {{ background: #e55a2b; }}
 @media (max-width: 640px) {{ .grid {{ grid-template-columns: 1fr; }} .service-cards {{ grid-template-columns: 1fr; }} .hero h1 {{ font-size: 24px; }} .container {{ padding: 12px 16px 60px; }} }}
 </style>
 </head>
@@ -419,6 +435,7 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
         <a href="#" onclick="switchTab('adcopy',this);return false">Ad Copy</a>
         <a href="/api">API</a>
         <a href="/health">Health</a>
+        <div class="nav-lang" id="navLang"></div>
     </div>
 </div>
 
@@ -490,6 +507,7 @@ let currentArticle = null;
 const LANG_MAP = {''' + lang_json + '''};
 const LANG_ORDER = ''' + json.dumps(LANG_ORDER) + ''';
 let currentLang = 'all';
+let retryCount = 0;
 function switchTab(name, el) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -500,19 +518,29 @@ function switchTab(name, el) {
 }
 async function fetchNews(lang) {
     const el = document.getElementById('newsContent');
-    el.innerHTML = '<div class="loading"><div class="spinner"></div><div>Fetching global news...</div></div>';
+    el.innerHTML = '<div class="loading"><div class="spinner"></div><div>Fetching global news'+(retryCount>0?' (attempt '+(retryCount+1)+')':'')+'...</div></div>';
     try {
-        const r = await fetch(API+'/api/news?lang='+lang);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 55000);
+        const r = await fetch(API+'/api/news?lang='+lang, {signal: controller.signal});
+        clearTimeout(timeout);
         const d = await r.json();
         allArticles = d.articles || [];
+        retryCount = 0;
         renderNews(allArticles);
     } catch(e) {
-        el.innerHTML = '<div class="error-state"><h2>Connection Error</h2><p>Server may be waking up.</p></div>';
+        retryCount++;
+        if (retryCount < 3) {
+            setTimeout(() => fetchNews(lang), 5000);
+            el.innerHTML = '<div class="loading"><div class="spinner"></div><div>Server is warming up, retrying in 5s...</div></div>';
+        } else {
+            el.innerHTML = '<div class="error-state"><h2>Still Loading</h2><p>First load takes 30-60s. Please wait or refresh.</p><button class="retry-btn" onclick="retryCount=0;fetchNews(\''+lang+'\')">⟳ Retry Now</button></div>';
+        }
     }
 }
 function renderNews(articles) {
     const el = document.getElementById('newsContent');
-    if (!articles || !articles.length) { el.innerHTML = '<div class="error-state"><h2>No Articles</h2></div>'; return; }
+    if (!articles || !articles.length) { el.innerHTML = '<div class="error-state"><h2>No Articles</h2><p>Try selecting a language above.</p><button class="retry-btn" onclick="retryCount=0;fetchNews(currentLang)">⟳ Refresh</button></div>'; return; }
     let html = '<div class="grid">';
     for (const a of articles) {
         const ld = LANG_MAP[a.lang] || {display:a.lang,flag:''};
@@ -581,7 +609,24 @@ function escAttr(s) { if (!s) return ''; return s.replace(/"/g,'&quot;').replace
         btn.onclick = (e)=>{ setLang(k, btn); }; bar.appendChild(btn);
     }
 })();
-function setLang(lang, btn) { currentLang = lang; document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); fetchNews(lang); }
+(function buildNavLang() {
+    const bar = document.getElementById('navLang');
+    for (const k of LANG_ORDER) {
+        if (!LANG_MAP[k]) continue;
+        const btn = document.createElement('button'); btn.className = 'nav-lang-btn';
+        btn.textContent = LANG_MAP[k].flag;
+        btn.title = LANG_MAP[k].display;
+        btn.onclick = ()=>{ switchTab('news'); setLang(k, document.querySelector('.lang-btn[data-lang="'+k+'"]')||document.querySelector('.lang-btn')); };
+        bar.appendChild(btn);
+    }
+})();
+function setLang(lang, btn) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-lang-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    fetchNews(lang);
+}
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 document.addEventListener('click', e => { if (e.target.classList.contains('modal-overlay')) closeModal(); });
 fetchNews('all');
@@ -619,7 +664,10 @@ def health():
 # ============ BACKGROUND ============
 def bg_loop():
     fetch_keys()
-    time.sleep(15)
+    time.sleep(10)
+    fetch_all_news(fast=True)
+    time.sleep(20)
+    NEWS_CACHE.clear()
     fetch_all_news()
     while True:
         time.sleep(600)
