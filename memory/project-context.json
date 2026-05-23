@@ -191,7 +191,44 @@
       }
     ]
   },
-  "last_session": "2026-05-23T05:12:00Z",
+  "last_session": "2026-05-23T23:59:00Z",
+  "auth_status": "live — Supabase Auth + usage limits + login modal deployed on Vercel",
+  "test_results_2026-05-23": "All 8 tests passed: page 200, articles in HTML, lang dropdown, auth modal, news API, /api/me, health, signup+signin",
+  "vercel_url": "https://yaqeen-ad-copy.vercel.app/",
+  "session_2026-05-23_v3_supabase_auth": {
+    "title": "YAQEEN v3: Supabase Auth + Usage Limits + UI Fixes",
+    "actions": [
+      "1. Fixed language switcher: multiple buttons → single button with CSS dropdown",
+      "2. Fixed news not loading: server-rendered articles in HTML (no JS dependency for initial load)",
+      "3. Added Cache-Control headers to /api/news for Vercel edge caching",
+      "4. Fixed cold start timeout: 7.5s deadline + 1 source/language + 3s RSS timeout",
+      "5. Added debug status indicator for news loading",
+      "6. Created services/supabase_client.py — Supabase Auth + REST API (signup, signin, profile, usage tracking)",
+      "7. Integrated Supabase: login/signup modal in nav bar, /auth endpoint, /api/me, /api/signout",
+      "8. Created profiles table + auto-create trigger in Supabase SQL",
+      "9. Usage limits: Rewrite (5/day free), Ad Copy (2/day free) — checked server-side",
+      "10. update_usage() reads current value from DB before incrementing (avoids set vs increment bug)",
+      "11. Nested event listener for auth modal close",
+      "12. checkAuth() on page load — auto-detects logged-in user"
+    ],
+    "files_created": [
+      "services/supabase_client.py — Supabase Auth + REST wrapper",
+      "vercel.json — (deleted, caused deploy failure)"
+    ],
+    "deployment": {
+      "platform": "Vercel",
+      "url": "https://yaqeen-ad-copy.vercel.app/",
+      "status": "live — all endpoints working",
+      "features": "Server-rendered articles, auth modal, usage limits, dropdown lang selector"
+    },
+    "supabase": {
+      "url": "https://zbduwiftxyeyuyokefnq.supabase.co",
+      "features": "Auth (email/password), PostgreSQL profiles table, auto-create trigger",
+      "limits": "Rewrites: 5/day free, Ad Copies: 2/day free",
+      "email_confirm": "OFF (user configured in dashboard)"
+    },
+    "auth_test": "signup + signin verified working (returns profile with usage counts)"
+  },
   "session_2026-05-23_news_deploy": {
     "title": "YAQEEN World News + Free API Keys + Vercel Deployment",
     "actions": [
@@ -231,23 +268,16 @@
     "usdc_zero": "0 USDC on both wallets — cannot execute CowSwap, Templ pool operations, or verify x402 payments on-chain"
   },
   "next_actions": [
-    "[HIGH] Deploy on PythonAnywhere (fastest path): 1) Signup at pythonanywhere.com 2) Upload services/yaqeen_ad_api_deploy.py 3) pip install flask 4) Reload web app → live URL in 5 minutes",
-    "[HIGH] Share yaqeen_client.html (static demo) via GitHub Pages when account created, or as email attachment to clients",
+    "[HIGH] Deploy on PythonAnywhere (backup for Vercel): Signup → upload app.py → pip install → reload",
+    "[HIGH] إضافة سلة الدفع (Subscription tiers): Pro ($9.99) و Enterprise (API)",
     "[HIGH] MONITOR OpenServ Ideaboard idea #69975e64 for new comments/requests",
-    "[MEDIUM] Reply to any comments on our shipped idea",
     "[MEDIUM] Scale ad copy generator with competitor analysis + visual suggestions",
     "[MEDIUM] Browse more OpenServ ideas for second pickup opportunity",
-    "[MEDIUM] Promote yaqeen_client.html (open in browser, works offline) as instant demo",
     "[LOW] Check Moltbook notifications for replies",
     "[LOW] BID on more dealwork.ai jobs when available",
     "WAIT for TaskMarket requesters to approve submissions (~$150 pending)",
     "MONITOR TaskMarket submission statuses daily via API",
-    "When USDC arrives: execute CowSwap script → swap USDC→ETH → bridge to Base → fund YAQEEN pool → deploy x402 endpoint → generate recurring income",
-    "CowSwap script: scripts/cowswap_permit_order.py — ready to execute (signing fixed, needs on-chain approve tx for allowance)",
-    "REPLY to hermesworms about YAQEEN pool council membership",
-    "SUBSCRIBE to TaskMarket CLI agent for automated monitoring",
-    "BUILD yaqeen.py into a proper agent that monitors and auto-submits",
-    "Scale to other ideas on OpenServ Ideaboard"
+    "When USDC arrives: execute CowSwap script → swap USDC→ETH → bridge to Base → fund YAQEEN pool → deploy x402 endpoint → generate recurring income"
   ],
   "openserv": {
     "status": "registered",
@@ -580,10 +610,11 @@
   "git": {
     "repo": "C:\\Users\\manadger\\Desktop\\moltbook-app",
     "branch": "master",
-    "last_commit": "ed49359 - YAQEEN v2: single-file deployment + client page + agent CLI",
-    "files_count": 88,
+    "last_commit": "b2c3529 - feat: login/signup modal + usage display + checkAuth on load",
+    "remote": "https://github.com/hadochhassan25-lgtm/yaqeen-ad-copy.git",
+    "files_count": 91,
     "ignored": [".env", "memory/credentials*.json", "__pycache__/", "*.pyc"],
     "github_ready": true,
-    "remote": "not set — needs GitHub repo created and git remote add origin"
+    "vercel_deploy": "auto — every push to master deploys to https://yaqeen-ad-copy.vercel.app/"
   }
 }
