@@ -789,8 +789,19 @@ function setLang(lang, btn) {
 }
 // ============ AUTH ============
 let authMode = 'signin';
-function openAuth() { document.getElementById('authModal').classList.add('open'); document.getElementById('authEmail').focus(); }
-function closeAuth() { document.getElementById('authModal').classList.remove('open'); document.getElementById('authError').style.display = 'none'; }
+function openAuth() { 
+    const m = document.getElementById('authModal');
+    if (!m) { alert('Auth modal not found. Check if sign-in is enabled.'); return; }
+    m.classList.add('open'); 
+    const e = document.getElementById('authEmail');
+    if (e) e.focus();
+}
+function closeAuth() { 
+    const m = document.getElementById('authModal');
+    if (m) m.classList.remove('open');
+    const err = document.getElementById('authError');
+    if (err) err.style.display = 'none';
+}
 function toggleAuthMode() {
     authMode = authMode === 'signin' ? 'signup' : 'signin';
     document.getElementById('authTitle').textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
@@ -815,7 +826,8 @@ async function doAuth() {
     err.style.display = 'none';
     try {
         const r = await fetch('/auth', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:authMode, email, password})});
-        const d = await r.json();
+        let d;
+        try { d = await r.json(); } catch(e) { err.textContent = 'Server error (HTTP '+r.status+')'; err.style.display = 'block'; btn.disabled = false; btn.textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up'; return; }
         if (d.success) {
             if (authMode === 'signup') {
                 authMode = 'signin';
