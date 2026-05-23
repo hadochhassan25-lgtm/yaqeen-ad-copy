@@ -582,7 +582,7 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
             <div class="nav-lang-dropdown" id="navLangDropdown">''' + nav_dropdown_html + '''</div>
         </div>
         <div id="authSection">
-            <button class="nav-auth-btn" id="loginBtn" onclick="openAuth()">Sign In</button>
+            <button class="nav-auth-btn" id="loginBtn">Sign In</button>
         </div>
     </div>
 </div>
@@ -592,14 +592,14 @@ body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); colo
     <div class="auth-box">
         <div style="display:flex;justify-content:space-between;align-items:start">
             <h2 id="authTitle">Sign In</h2>
-            <button style="background:none;border:none;color:var(--text-dim);font-size:24px;cursor:pointer" onclick="closeAuth()">&times;</button>
+            <button class="auth-close" style="background:none;border:none;color:var(--text-dim);font-size:24px;cursor:pointer">&times;</button>
         </div>
         <p id="authSub">Sign in to your YAQEEN account</p>
         <div class="auth-error" id="authError"></div>
         <input class="auth-input" id="authEmail" type="email" placeholder="Email">
         <input class="auth-input" id="authPass" type="password" placeholder="Password">
-        <button class="auth-submit" id="authSubmit" onclick="doAuth()">Sign In</button>
-        <div class="auth-toggle" id="authToggle" onclick="toggleAuthMode()">Don't have an account? <strong>Sign Up</strong></div>
+        <button class="auth-submit" id="authSubmit">Sign In</button>
+        <div class="auth-toggle" id="authToggle">Don't have an account? <strong>Sign Up</strong></div>
     </div>
 </div>
 
@@ -791,14 +791,17 @@ function setLang(lang, btn) {
 let authMode = 'signin';
 function openAuth() { 
     const m = document.getElementById('authModal');
-    if (!m) { alert('Auth modal not found. Check if sign-in is enabled.'); return; }
-    m.classList.add('open'); 
+    if (!m) { alert('Auth modal not found'); return; }
+    m.style.display = 'flex';
+    m.classList.add('open');
     const e = document.getElementById('authEmail');
     if (e) e.focus();
 }
 function closeAuth() { 
     const m = document.getElementById('authModal');
-    if (m) m.classList.remove('open');
+    if (!m) return;
+    m.style.display = 'none';
+    m.classList.remove('open');
     const err = document.getElementById('authError');
     if (err) err.style.display = 'none';
 }
@@ -851,10 +854,19 @@ async function checkAuth() {
         if (d.authenticated) authSuccess(d);
     } catch(e) {}
 }
+// Attach auth button events (script runs after DOM is ready)
+(function(){
+    const lb = document.getElementById('loginBtn');
+    if (lb) lb.addEventListener('click', function(e){ e.preventDefault(); openAuth(); });
+    const sb = document.getElementById('authSubmit');
+    if (sb) sb.addEventListener('click', function(e){ e.preventDefault(); doAuth(); });
+    const tg = document.getElementById('authToggle');
+    if (tg) tg.addEventListener('click', function(e){ e.preventDefault(); toggleAuthMode(); });
+})();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 document.addEventListener('click', e => {
     if (e.target.classList.contains('modal-overlay')) closeModal();
-    if (e.target.classList.contains('auth-modal')) closeAuth();
+    if (e.target.classList.contains('auth-modal') || e.target.classList.contains('auth-close')) closeAuth();
     if (!e.target.closest('.nav-lang')) document.getElementById('navLangDropdown').classList.remove('open');
 });
 // Use server-embedded articles if available
