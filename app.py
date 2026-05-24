@@ -53,7 +53,7 @@ def fetch_keys():
     except:
         pass
 
-def get_key(model='smart-chat'):
+def get_key(model='deepseek-chat'):
     if time.time() - _last_refresh > REFRESH_INTERVAL:
         fetch_keys()
     with _lock:
@@ -221,9 +221,14 @@ SYSTEM_PROMPTS = {
     'zh': '你是一名专业新闻编辑。请用清晰简洁的中文重写以下新闻文章。保留所有事实，提高可读性，使用中立的新闻语气。只输出重写后的文本。'
 }
 
+LANG_MODEL_MAP = {
+    'en': 'deepseek-chat', 'fr': 'deepseek-chat', 'es': 'deepseek-chat',
+    'ar': 'deepseek-chat', 'zh': 'deepseek-chat'
+}
+
 def llm_rewrite(text, lang='en'):
     from openai import OpenAI
-    model = 'smart-chat'
+    model = LANG_MODEL_MAP.get(lang, 'deepseek-chat')
     prompt = SYSTEM_PROMPTS.get(lang, SYSTEM_PROMPTS['en'])
     tried = set()
     for _ in range(3):
