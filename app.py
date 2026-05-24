@@ -263,12 +263,6 @@ def ad_copy_landing():
 
 @app.route('/api/generate', methods=['POST'])
 def generate():
-    at = session.get('access_token')
-    if not at:
-        return jsonify({'success': False, 'error': 'Please sign in first', 'needs_auth': True}), 401
-    usage = _check_usage(at, 'adcopy')
-    if not usage['ok']:
-        return jsonify({'success': False, 'error': usage['error'], **usage['limits']}), 403
     data = request.get_json()
     if not data:
         return jsonify({'success': False, 'error': 'Request body required'}), 400
@@ -287,7 +281,6 @@ def generate():
                 lines.append(f'{key.replace("_"," ").title()}: {val}')
             lines.append('')
         formatted = '\n'.join(lines)
-        update_usage(at, 'adcopies_used', 1)
         return jsonify({'success': True, 'data': {'formatted': formatted, 'raw': result, 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 0.50, 'amount_eth': 0.0005}}})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -341,12 +334,6 @@ def _check_usage(at, action):
 
 @app.route('/api/rewrite', methods=['POST'])
 def rewrite():
-    at = session.get('access_token')
-    if not at:
-        return jsonify({'success': False, 'error': 'Please sign in first', 'needs_auth': True}), 401
-    usage = _check_usage(at, 'rewrite')
-    if not usage['ok']:
-        return jsonify({'success': False, 'error': usage['error'], **usage['limits']}), 403
     data = request.get_json()
     if not data:
         return jsonify({'success': False, 'error': 'Request body required'}), 400
@@ -358,7 +345,6 @@ def rewrite():
         return jsonify({'success': False, 'error': 'Text too short (min 20 chars)'}), 400
     try:
         rewritten = llm_rewrite(text, lang) or text
-        update_usage(at, 'rewrites_used', 1)
         return jsonify({'success': True, 'original': text[:1000], 'rewritten': rewritten, 'language': lang, 'service': 'YAQEEN News AI'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -371,34 +357,11 @@ def _html_esc(s):
 # ============ AUTH ROUTES ============
 @app.route('/auth', methods=['POST'])
 def auth():
-    action = request.json.get('action', '')
-    email = request.json.get('email', '').strip().lower()
-    password = request.json.get('password', '')
-    if not email or not password:
-        return jsonify({'success': False, 'error': 'Email and password required'}), 400
-    if action == 'signup':
-        result = sign_up(email, password)
-        if result['success']:
-            return jsonify({'success': True, 'message': 'Account created. You can now sign in.'})
-        return jsonify({'success': False, 'error': result.get('error', 'Signup failed')}), 400
-    result = sign_in(email, password)
-    if result['success']:
-        session['access_token'] = result['access_token']
-        session['refresh_token'] = result.get('refresh_token', '')
-        session['user_id'] = result['user_id']
-        session['email'] = result['email']
-        session.permanent = True
-        limits = get_limits(result['access_token'])
-        return jsonify({'success': True, 'user': {'email': result['email'], 'user_id': result['user_id']}, **limits})
-    return jsonify({'success': False, 'error': result.get('error', 'Login failed')}), 401
+    return jsonify({'success': True, 'user': {'email': 'guest@yaqeen.ai', 'user_id': 'guest'}, 'rewrites_used': 0, 'rewrites_limit': 1000})
 
 @app.route('/api/me')
 def api_me():
-    at = session.get('access_token')
-    if not at:
-        return jsonify({'authenticated': False, 'error': 'Not logged in'})
-    limits = get_limits(at)
-    return jsonify({'authenticated': True, 'email': session.get('email', ''), **limits})
+    return jsonify({'authenticated': True, 'email': 'guest@yaqeen.ai', 'rewrites_used': 0, 'rewrites_limit': 1000})
 
 @app.route('/api/signout', methods=['POST'])
 def api_signout():
@@ -438,25 +401,8 @@ def admin_profile():
 # ============ UI & SYSTEM ROUTES ============
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-        mode = request.form.get('mode', 'signin')
-        if mode == 'signup':
-            result = sign_up(email, password)
-            if result['success']:
-                return '''<html><body><script>alert('Account created! Sign in below.');window.location.href='/login'</script></body></html>'''
-            return '<html><body><script>alert(' + json.dumps(result.get('error','Signup failed')) + ');history.back()</script></body></html>'
-        result = sign_in(email, password)
-        if result['success']:
-            session['access_token'] = result['access_token']
-            session['refresh_token'] = result.get('refresh_token', '')
-            session['user_id'] = result['user_id']
-            session['email'] = result['email']
-            session.permanent = True
-            return redirect('/')
-        return redirect('/login?error=' + result.get('error', 'Login failed'))
-    if request.method == 'GET':
+    # Auth bypassed — redirect to main page
+    return redirect('/')
         error = request.args.get('error', '')
         return '''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Sign In - YAQEEN</title><style>
 body{font-family:'Inter',system-ui,sans-serif;background:#0a0a0f;color:#e8e8ee;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:20px}

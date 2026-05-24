@@ -113,11 +113,11 @@ import free_api_keys
 free_api_keys.init()
 
 LANG_MODEL_MAP = {
-    'en': 'smart-chat',
-    'fr': 'smart-chat',
-    'es': 'smart-chat',
-    'ar': 'smart-chat',
-    'zh': 'smart-chat'
+    'en': 'deepseek-chat',
+    'fr': 'deepseek-chat',
+    'es': 'deepseek-chat',
+    'ar': 'deepseek-chat',
+    'zh': 'deepseek-chat'
 }
 
 SYSTEM_PROMPTS = {
@@ -130,7 +130,7 @@ SYSTEM_PROMPTS = {
 
 def llm_rewrite(text, lang='en'):
     from openai import OpenAI
-    model = LANG_MODEL_MAP.get(lang, 'smart-chat')
+    model = LANG_MODEL_MAP.get(lang, 'deepseek-chat')
     prompt = SYSTEM_PROMPTS.get(lang, SYSTEM_PROMPTS['en'])
     tried = set()
     for _ in range(3):
@@ -484,8 +484,7 @@ body {{
     for k, v in langs.items():
         sel = ' selected' if k == 'en' else ''
         lang_opts += f'<option value="{k}"{sel}>{v["flag"]} {v["display"]}</option>'
-    lang_opts += '<option value="all">🌐 All Languages</option>'
-
+    # no "all" option — rewriting requires a specific target language
     UI += lang_opts + '''
             </select>
             <button class="rewrite-btn" id="rewriteBtn" onclick="doRewrite()">⟳ Rewrite</button>
