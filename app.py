@@ -1,6 +1,6 @@
 import sys, io, os, json, random, hashlib, re, html
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, redirect
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 import threading, time, requests
@@ -438,9 +438,27 @@ def admin_profile():
 # ============ UI & SYSTEM ROUTES ============
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        mode = request.form.get('mode', 'signin')
+        if mode == 'signup':
+            result = sign_up(email, password)
+            if result['success']:
+                return '''<html><body><script>alert('Account created! Sign in below.');window.location.href='/login'</script></body></html>'''
+            return '<html><body><script>alert(' + json.dumps(result.get('error','Signup failed')) + ');history.back()</script></body></html>'
+        result = sign_in(email, password)
+        if result['success']:
+            session['access_token'] = result['access_token']
+            session['refresh_token'] = result.get('refresh_token', '')
+            session['user_id'] = result['user_id']
+            session['email'] = result['email']
+            session.permanent = True
+            return redirect('/')
+        return redirect('/login?error=' + result.get('error', 'Login failed'))
     if request.method == 'GET':
         error = request.args.get('error', '')
-        return '''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Sign In — YAQEEN</title><style>
+        return '''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Sign In - YAQEEN</title><style>
 body{font-family:'Inter',system-ui,sans-serif;background:#0a0a0f;color:#e8e8ee;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:20px}
 .box{background:#12121a;border:1px solid #1e1e30;border-radius:16px;max-width:400px;width:100%;padding:32px}
 h2{font-size:22px;margin-bottom:4px;margin-top:0}
@@ -907,7 +925,7 @@ function authSuccess(data) {
     const section = document.getElementById('authSection');
     const email = data.user?.email || data.email || '';
     if (data.is_admin) {
-        section.innerHTML = '<div class="nav-user">'+email+' <span class="usage-badge" style="background:rgba(124,58,237,.2);color:#a78bfa">Admin</span> <a href="/login" style="color:var(--text-dim);font-size:12px;margin-left:4px" onclick="e.preventDefault();openAuth()">Settings</a></div>';
+        section.innerHTML = '<div class="nav-user">'+email+' <span class="usage-badge" style="background:rgba(124,58,237,.2);color:#a78bfa">Admin</span> <a href="/login" style="color:var(--text-dim);font-size:12px;margin-left:4px" onclick="event.preventDefault();openAuth()">Settings</a></div>';
     } else {
         section.innerHTML = '<div class="nav-user">'+email+' <span class="usage-badge">'+data.rewrites_used+'/'+data.rewrites_limit+'</span></div>';
     }
