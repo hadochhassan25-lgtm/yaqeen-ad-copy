@@ -491,7 +491,7 @@ mode=mode==='signin'?'signup':'signin';
 document.getElementById('t').textContent=mode==='signin'?'Sign In':'Sign Up';
 document.getElementById('s').textContent=mode==='signin'?'Sign in to your YAQEEN account':'Create a free account';
 document.getElementById('b').textContent=mode==='signin'?'Sign In':'Sign Up';
-document.getElementById('tg').innerHTML=mode==='signin'?'Don\'t have an account? <strong>Sign Up</strong>':'Already have an account? <strong>Sign In</strong>';
+document.getElementById('tg').innerHTML=mode==='signin'?"Don&apos;t have an account? <strong>Sign Up</strong>":"Already have an account? <strong>Sign In</strong>";
 };
 document.getElementById('f').onsubmit=async function(e){
 e.preventDefault();
@@ -504,7 +504,7 @@ btn.disabled=true;btn.textContent='...';err.style.display='none';
 try{const r=await fetch('/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:mode,email,password})});
 const d=await r.json();
 if(d.success){
-if(mode==='signup'){mode='signin';document.getElementById('t').textContent='Sign In';document.getElementById('b').textContent='Sign In';document.getElementById('s').textContent='Account created! Sign in below.';document.getElementById('tg').innerHTML='Don\'t have an account? <strong>Sign Up</strong>';btn.disabled=false;return;}
+if(mode==='signup'){mode='signin';document.getElementById('t').textContent='Sign In';document.getElementById('b').textContent='Sign In';document.getElementById('s').textContent='Account created! Sign in below.';document.getElementById('tg').innerHTML="Don&apos;t have an account? <strong>Sign Up</strong>";btn.disabled=false;return;}
 window.location.href='/';
 }else{err.textContent=d.error||'Auth failed';err.style.display='block';}
 }catch(e){err.textContent='Network error';err.style.display='block';}
@@ -917,7 +917,7 @@ function toggleAuthMode() {
     document.getElementById('authTitle').textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
     document.getElementById('authSub').textContent = authMode === 'signin' ? 'Sign in to your YAQEEN account' : 'Create a free account';
     document.getElementById('authSubmit').textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
-    document.getElementById('authToggle').innerHTML = authMode === 'signin' ? 'Don\'t have an account? <strong>Sign Up</strong>' : 'Already have an account? <strong>Sign In</strong>';
+    document.getElementById('authToggle').innerHTML = authMode === 'signin' ? "Don&apos;t have an account? <strong>Sign Up</strong>" : "Already have an account? <strong>Sign In</strong>";
     document.getElementById('authError').style.display = 'none';
 }
 function authSuccess(data) {
