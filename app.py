@@ -174,12 +174,10 @@ def fetch_all_news(fast=False):
                 return
     except:
         pass
-    if len(NEWS_CACHE) > 0:
-        return
     all_articles = []
-    max_sources = 1 if fast else 4
-    rss_timeout = 3 if fast else 5
-    deadline = now + 7.5
+    max_sources = 3 if fast else 6
+    rss_timeout = 5 if fast else 7
+    deadline = now + (15 if fast else 30)
     for lang_key, lang_data in ALL_SOURCES.items():
         if lang_key.startswith('_'):
             continue
@@ -195,6 +193,29 @@ def fetch_all_news(fast=False):
                     it['source_url'] = s['url']
                     it['lang'] = lang_key
                 all_articles.extend(items)
+            except:
+                pass
+    # Fallback: retry languages with 0 articles using ALL remaining sources
+    langs_with_articles = set(a.get('lang') for a in all_articles)
+    for lang_key, lang_data in ALL_SOURCES.items():
+        if lang_key.startswith('_'):
+            continue
+        if lang_key in langs_with_articles:
+            continue
+        if time.time() > deadline + 10:
+            break
+        for s in lang_data.get('sources', []):
+            if time.time() > deadline + 10:
+                break
+            try:
+                items = fetch_rss(s['url'], timeout=8)
+                for it in items:
+                    it['source_name'] = s['name']
+                    it['source_url'] = s['url']
+                    it['lang'] = lang_key
+                all_articles.extend(items)
+                if items:
+                    break
             except:
                 pass
     seen = set()
