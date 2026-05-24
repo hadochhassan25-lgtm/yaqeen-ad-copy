@@ -10,7 +10,7 @@ app.secret_key = os.getenv('FLASK_SECRET', 'yaqeen-manadger-secret-2026')
 app.permanent_session_lifetime = timedelta(days=7)
 BASE = Path(__file__).resolve().parent
 
-from services.supabase_client import sign_up, sign_in, get_profile, get_limits, update_usage
+from services.supabase_client import sign_up, sign_in, get_limits, update_usage, set_admin, get_user_metadata, update_user_metadata
 
 # ============ FREE API KEYS ============
 LLM_API_BASE = 'https://aiapiv2.pekpik.com/v1'
@@ -404,6 +404,36 @@ def api_me():
 def api_signout():
     session.clear()
     return jsonify({'success': True, 'message': 'Signed out'})
+
+# ============ ADMIN ROUTES ============
+def require_admin():
+    at = session.get('access_token')
+    if not at:
+        return None, None
+    limits = get_limits(at)
+    if limits.get('is_admin'):
+        return at, limits.get('email', '')
+    return None, None
+
+@app.route('/api/admin/setup', methods=['POST'])
+def admin_setup():
+    """Promote the currently signed-in user to admin (one-time)."""
+    at = session.get('access_token')
+    if not at:
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+    ok = set_admin(at)
+    if ok:
+        return jsonify({'success': True, 'message': 'Admin privileges granted'})
+    return jsonify({'success': False, 'error': 'Failed to set admin'}), 500
+
+@app.route('/api/admin/profile', methods=['GET'])
+def admin_profile():
+    """View admin's own scan of current user info from session."""
+    at, email = require_admin()
+    if not at:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    me = get_user_metadata(at)
+    return jsonify({'success': True, 'admin_email': email, 'profile': me.get('user_metadata', {})})
 
 # ============ UI & SYSTEM ROUTES ============
 @app.route('/login', methods=['GET', 'POST'])
@@ -875,7 +905,12 @@ function toggleAuthMode() {
 function authSuccess(data) {
     closeAuth();
     const section = document.getElementById('authSection');
-    section.innerHTML = '<div class="nav-user">'+(data.user?.email||'')+' <span class="usage-badge">'+data.rewrites_used+'/'+data.rewrites_limit+'</span></div>';
+    const email = data.user?.email || data.email || '';
+    if (data.is_admin) {
+        section.innerHTML = '<div class="nav-user">'+email+' <span class="usage-badge" style="background:rgba(124,58,237,.2);color:#a78bfa">Admin</span> <a href="/login" style="color:var(--text-dim);font-size:12px;margin-left:4px" onclick="e.preventDefault();openAuth()">Settings</a></div>';
+    } else {
+        section.innerHTML = '<div class="nav-user">'+email+' <span class="usage-badge">'+data.rewrites_used+'/'+data.rewrites_limit+'</span></div>';
+    }
     document.getElementById('loginBtn')?.remove();
 }
 async function doAuth() {
