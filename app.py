@@ -161,7 +161,7 @@ def _cache_path():
         return p
     return CACHE_FILE
 
-def fetch_all_news(fast=False):
+def fetch_all_news(fast=False, brief=False):
     global NEWS_CACHE
     now = time.time()
     cache_file = _cache_path()
@@ -175,9 +175,9 @@ def fetch_all_news(fast=False):
     except:
         pass
     all_articles = []
-    max_sources = 3 if fast else 6
-    rss_timeout = 5 if fast else 7
-    deadline = now + (15 if fast else 30)
+    max_sources = 1 if brief else (3 if fast else 6)
+    rss_timeout = 3 if brief else (5 if fast else 7)
+    deadline = now + (3 if brief else (15 if fast else 30))
     for lang_key, lang_data in ALL_SOURCES.items():
         if lang_key.startswith('_'):
             continue
@@ -196,28 +196,29 @@ def fetch_all_news(fast=False):
             except:
                 pass
     # Fallback: retry languages with 0 articles using ALL remaining sources
-    langs_with_articles = set(a.get('lang') for a in all_articles)
-    for lang_key, lang_data in ALL_SOURCES.items():
-        if lang_key.startswith('_'):
-            continue
-        if lang_key in langs_with_articles:
-            continue
-        if time.time() > deadline + 10:
-            break
-        for s in lang_data.get('sources', []):
+    if not brief:
+        langs_with_articles = set(a.get('lang') for a in all_articles)
+        for lang_key, lang_data in ALL_SOURCES.items():
+            if lang_key.startswith('_'):
+                continue
+            if lang_key in langs_with_articles:
+                continue
             if time.time() > deadline + 10:
                 break
-            try:
-                items = fetch_rss(s['url'], timeout=8)
-                for it in items:
-                    it['source_name'] = s['name']
-                    it['source_url'] = s['url']
-                    it['lang'] = lang_key
-                all_articles.extend(items)
-                if items:
+            for s in lang_data.get('sources', []):
+                if time.time() > deadline + 10:
                     break
-            except:
-                pass
+                try:
+                    items = fetch_rss(s['url'], timeout=8)
+                    for it in items:
+                        it['source_name'] = s['name']
+                        it['source_url'] = s['url']
+                        it['lang'] = lang_key
+                    all_articles.extend(items)
+                    if items:
+                        break
+                except:
+                    pass
     seen = set()
     deduped = []
     for a in all_articles:
@@ -252,20 +253,21 @@ def llm_rewrite(text, lang='en'):
     model = LANG_MODEL_MAP.get(lang, 'deepseek-chat')
     prompt = SYSTEM_PROMPTS.get(lang, SYSTEM_PROMPTS['en'])
     tried = set()
-    for _ in range(3):
+    for _ in range(2):
         key = get_key(model)
         if not key or key in tried:
             break
         tried.add(key)
         try:
-            client = OpenAI(base_url=LLM_API_BASE, api_key=key)
+            client = OpenAI(base_url=LLM_API_BASE, api_key=key, timeout=20)
             resp = client.chat.completions.create(
                 model=model,
                 messages=[{'role': 'system', 'content': prompt}, {'role': 'user', 'content': text[:1200]}],
-                max_tokens=500, temperature=0.3
+                max_tokens=500, temperature=0.3,
+                timeout=20
             )
             content = resp.choices[0].message.content
-            if content and len(content) > 20 and content.strip() != text.strip()[:500]:
+            if content and len(content) > 15 and content.strip()[:100] != text.strip()[:100]:
                 return content.strip()
         except:
             continue
@@ -326,7 +328,7 @@ def sample():
 @app.route('/api/news')
 def get_news():
     if not NEWS_CACHE:
-        fetch_all_news(fast=True)
+        threading.Thread(target=fetch_all_news, kwargs={'fast': True}, daemon=True).start()
     lang = request.args.get('lang', 'all')
     articles = NEWS_CACHE
     if lang and lang != 'all' and lang in ALL_SOURCES:
@@ -455,9 +457,6 @@ def index():
         lang_bar_html += '<button class="lang-btn" data-lang="'+k+'" onclick="setLang(\''+k+'\',this)">'+flag+' '+disp+'</button>'
     lang_json = lang_json.rstrip(',')
 
-    # Try to fetch news for immediate display
-    if not NEWS_CACHE:
-        fetch_all_news(fast=True)
     initial_articles = NEWS_CACHE[:50]
     grid_html = ''
     for a in initial_articles:
@@ -944,9 +943,8 @@ def health():
 # ============ BACKGROUND ============
 def bg_loop():
     fetch_keys()
-    time.sleep(10)
     fetch_all_news(fast=True)
-    time.sleep(20)
+    time.sleep(15)
     NEWS_CACHE.clear()
     fetch_all_news()
     while True:
