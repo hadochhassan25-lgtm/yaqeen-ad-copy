@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manadger Tech — Dashboard Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white p-8">
+<div class="max-w-7xl mx-auto">
+  <h1 class="text-3xl font-bold mb-8">📊 Business Intelligence Dashboard</h1>
+  
+  <div class="grid grid-cols-4 gap-4 mb-8">
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+      <div class="text-slate-400 text-sm">Total Revenue</div>
+      <div class="text-3xl font-bold text-green-400">$48,250</div>
+      <div class="text-green-500 text-sm">+12.5% vs last month</div>
+    </div>
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+      <div class="text-slate-400 text-sm">Active Clients</div>
+      <div class="text-3xl font-bold text-cyan-400">24</div>
+      <div class="text-cyan-500 text-sm">+3 new this week</div>
+    </div>
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+      <div class="text-slate-400 text-sm">Agent Tasks</div>
+      <div class="text-3xl font-bold text-yellow-400">147</div>
+      <div class="text-yellow-500 text-sm">92% completion rate</div>
+    </div>
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+      <div class="text-slate-400 text-sm">Platform Score</div>
+      <div class="text-3xl font-bold text-purple-400">A-</div>
+      <div class="text-purple-500 text-sm">+4 points this month</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-8 mb-8">
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+      <h2 class="text-xl font-bold mb-4">Revenue Trend</h2>
+      <canvas id="revenueChart" height="250"></canvas>
+    </div>
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+      <h2 class="text-xl font-bold mb-4">Platform Distribution</h2>
+      <canvas id="platformChart" height="250"></canvas>
+    </div>
+  </div>
+
+  <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+    <h2 class="text-xl font-bold mb-4">Recent Activity</h2>
+    <table class="w-full text-right">
+      <thead><tr class="text-slate-400 border-b border-slate-700">
+        <th class="py-2">Date</th><th class="py-2">Event</th><th class="py-2">Platform</th><th class="py-2">Value</th>
+      </tr></thead>
+      <tbody>
+        <tr class="border-b border-slate-700/50"><td class="py-3">2026-05-26</td><td>Bid Accepted</td><td>NEAR AI Market</td><td class="text-green-400">+1 NEAR</td></tr>
+        <tr class="border-b border-slate-700/50"><td class="py-3">2026-05-26</td><td>Task Created</td><td>HireMyAI</td><td class="text-yellow-400">$900</td></tr>
+        <tr class="border-b border-slate-700/50"><td class="py-3">2026-05-26</td><td>Listing Approved</td><td>Agoragentic</td><td class="text-cyan-400">Live</td></tr>
+        <tr class="border-b border-slate-700/50"><td class="py-3">2026-05-26</td><td>Worker Started</td><td>Dealwork</td><td class="text-purple-400">PID 9940</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+new Chart(document.getElementById('revenueChart'), {
+  type: 'line',
+  data: {
+    labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+    datasets: [{
+      label: 'Revenue ($)',
+      data: [1200, 2400, 3600, 8200, 12400, 18450],
+      borderColor: '#22d3ee',
+      backgroundColor: 'rgba(34,211,238,0.1)',
+      tension: 0.4,
+      fill: true
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } }, scales: { y: { ticks: { color: 'gray' } }, x: { ticks: { color: 'gray' } } } }
+});
+
+new Chart(document.getElementById('platformChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['HireMyAI', 'NEAR Market', 'Agoragentic', 'Dealwork', 'AgentHansa'],
+    datasets: [{
+      data: [4650, 30, 0, 33, 0.11],
+      backgroundColor: ['#22d3ee', '#a78bfa', '#f59e0b', '#34d399', '#ef4444']
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } } }
+});
+</script>
+</body>
+</html>

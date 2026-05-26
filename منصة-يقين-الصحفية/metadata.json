@@ -1,0 +1,6 @@
+{
+  "name": "منصة يقين الصحفية",
+  "description": "منصة أخبار RSS حقيقية متعددة اللغات مع إعادة صياغة بالذكاء الاصطناعي عبر PekPik API، ولوحة تحكم متكاملة للاشتراكات",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_AI_API"]
+}

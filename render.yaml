@@ -1,12 +1,9 @@
 services:
   - type: web
-    name: yaqeen-ai
-    runtime: python
-    repo: https://github.com/hadochhassan25-lgtm/yaqeen-ad-copy
-    plan: free
-    branch: master
+    name: yaqeen-api
+    env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --worker-class gthread --timeout 120
+    startCommand: python services/yaqeen_ad_api_deploy.py
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
+      - key: PORT
+        value: "10000"

@@ -3,6 +3,10 @@
 memory/credentials*.json
 memory/credentials.json
 memory/*.py
+memory/*.log
+memory/*.txt
+memory/*.xml
+memory/*.json
 scripts/credentials.ps1
 
 # Python
@@ -18,3 +22,5 @@ services/ad_copy_generator.py
 
 # Temp
 *.tmp
+
+.vercel
