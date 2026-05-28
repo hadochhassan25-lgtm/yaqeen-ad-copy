@@ -163,6 +163,10 @@ Services:
 - TRANSLATION ($1.00): EN-AR-FR marketing-aware translation  
 - SEO REPORTS ($1.00): Technical audits with keyword analysis
 
+Payment:
+- Crypto (USDC/ETH): 0xD0366D78055b8c637c44d769D1A1371106d13552
+- PayPal: https://paypal.me/lamti
+
 Delivery: <10 seconds. Languages: English, Arabic, French
 Powered by GPT-4o-mini (GitHub Models) + DeepSeek v3 backup."""
         r = requests.patch(f'{API}/listings/{LISTING_ID}', headers=H,

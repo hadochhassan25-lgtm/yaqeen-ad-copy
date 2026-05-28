@@ -84,12 +84,13 @@ def api_index():
 <p>POST /api/generate with JSON: {business, audience, industry, platform, tone, language, count}</p>
 <p>GET /api/sample - Sample output</p>
 <p>GET /health - Health check</p>
-<p>Wallet: 0xD0366D78055b8c637c44d769D1A1371106d13552</p>
-<p>Price: $0.50 USDC per request</p>'''
+<p>💳 Crypto: 0xD0366D78055b8c637c44d769D1A1371106d13552 (USDC/ETH)</p>
+<p>💳 PayPal: <a href="https://paypal.me/lamti?locale.x=ar_EG&country.x=MA">paypal.me/lamti</a></p>
+<p>Price: $0.50 per request</p>'''
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'service': 'yaqeen-ad-copy', 'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'price': '$0.50 USDC/request'})
+    return jsonify({'status': 'ok', 'service': 'yaqeen-ad-copy', 'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'paypal': 'https://paypal.me/lamti', 'price': '$0.50/request (USDC/ETH/PayPal)'})
 
 @app.route('/api/generate', methods=['POST'])
 def generate():
@@ -105,14 +106,14 @@ def generate():
             platform=data.get('platform', 'facebook'), tone=data.get('tone', 'professional'),
             language=data.get('language', 'en'), count=min(data.get('count', 3), 10))
         formatted = format_result(result)
-        return jsonify({'success': True, 'data': {'formatted': formatted, 'raw': result, 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 0.50, 'amount_eth': 0.0005}}})
+        return jsonify({'success': True, 'data': {'formatted': formatted, 'raw': result, 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 0.50, 'amount_eth': 0.0005, 'paypal': 'https://paypal.me/lamti'}}})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/sample', methods=['GET'])
 def sample():
     result = generate_ad(business='Cafe Casa', audience='Young professionals in Casablanca', industry='Coffee shop', platform='instagram', count=1)
-    return jsonify({'success': True, 'sample': format_result(result), 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 0.50, 'amount_eth': 0.0005}})
+    return jsonify({'success': True, 'sample': format_result(result), 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 0.50, 'amount_eth': 0.0005, 'paypal': 'https://paypal.me/lamti'}})
 
 
 @app.route('/api/translate', methods=['POST'])
@@ -127,7 +128,7 @@ def translate():
     if not translated:
         translated = f"[{target}] {text}"
     is_llm = translated != f"[{target}] {text}"
-    return jsonify({'success': True, 'data': {'translated': translated, 'source': source, 'target': target, 'generated_by': 'llm' if is_llm else 'template', 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 1.00}}})
+    return jsonify({'success': True, 'data': {'translated': translated, 'source': source, 'target': target, 'generated_by': 'llm' if is_llm else 'template', 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 1.00, 'paypal': 'https://paypal.me/lamti'}}})
 
 @app.route('/api/seo-report', methods=['POST'])
 def seo_report():
@@ -159,7 +160,7 @@ def seo_report():
 
 Price: $1.00 USDC | Wallet: 0xD0366D78055b8c637c44d769D1A1371106d13552"""
     is_llm = "LCP" not in report[:100] if len(report) > 100 else False
-    return jsonify({'success': True, 'data': {'report': report, 'generated_by': 'llm' if is_llm else 'template', 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 1.00}}})
+    return jsonify({'success': True, 'data': {'report': report, 'generated_by': 'llm' if is_llm else 'template', 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 1.00, 'paypal': 'https://paypal.me/lamti'}}})
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
