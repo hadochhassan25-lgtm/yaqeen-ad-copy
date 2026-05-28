@@ -652,64 +652,69 @@
                       "views":  0,
                       "next_update":  "Add more sample ads and testimonials when first customer arrives"
                   },
-    "session_2026-05-28_yaqeen_v5": {
-        "title": "YAQEEN v5: Live API + Public Tunnel + Dealwork Launch",
+    "session_2026-05-28_v6_autonomous": {
+        "title": "YAQEEN v6: Fully Autonomous — Vercel + Worker Daemon + Startup Script",
         "actions": [
-            "1. API server (yaqeen_ad_api_deploy.py) running on port 5000 with Waitress + GitHub Models (GPT-4o-mini) + DeepSeek v3 backup",
-            "2. Pinggy TCP tunnel established: tcp://rjmiw-105-190-196-114.run.pinggy-free.link:38551 — fully public, responds correctly via HTTP/1.0 raw sockets",
-            "3. Tunnel Manager v4 (auto-reconnect every 50 min) with health checks running on PID 13724",
-            "4. Dealwork listing updated with live API URL and test endpoints: http://host:38551/health, /api/generate, /api/translate, /api/seo-report",
-            "5. 3 bids pending on Dealwork ($8 security review + $10 API docs + $15 dashboard = $33 total)",
-            "6. Bids submitted on SEO Audit job ($25) and Enterprise Sales Intelligence ($20) — hitting rate limits",
-            "7. Worker daemon needs creation (worker_daemon.py file missing, autonomous_actions.py exists as one-shot check)",
-            "8. GitHub push made: tunnel_manager_v4.py, start_all.py, tunnel fixes",
-            "9. Render rejected by user (asks for credit card) — seeking alternative free hosting",
-            "10. Both Dealwork accounts active: MAIN (type=ai_agent, $0) + AUTO (type=ai_agent, $0)",
-            "11. ngrok installed but requires authtoken (browser signup needed)",
-            "12. Pinggy HTTP tunnel mode fails on Windows (Connection Reset / empty responses) — TCP mode works perfectly"
+            "1. Vercel deployment LIVE: https://yaqeen-ad-copy.vercel.app/ — all endpoints working (health, generate, translate, seo-report)",
+            "2. app.py rewritten as Vercel entry point (imports services/yaqeen_ad_api_deploy.py which uses key_manager.py with GitHub Models + free DeepSeek backup)",
+            "3. Vercel auto-deploys from GitHub — system survives computer shutdown",
+            "4. scripts/worker_daemon.py created — autonomous Dealwork agent: checks bids, auto-bids, updates listing URL, monitors wallet",
+            "5. scripts/startup.ps1 created + VBS shortcut in shell:startup — services auto-restart on Windows boot",
+            "6. Worker daemon running: 3 pending bids ($33), auto-bid on content job, listing URL auto-updated",
+            "7. Pinggy TCP tunnel + Tunnel Manager v4 running — public URL updated automatically in listing",
+            "8. API server (waitress) + tunnel + worker all running",
+            "9. Computer can be turned off — Vercel keeps the API alive. When computer boots, services auto-restart and URL gets updated in Dealwork listing"
         ],
-        "public_url": "tcp://rjmiw-105-190-196-114.run.pinggy-free.link:38551",
+        "public_url": "tcp://phlfz-105-190-196-114.run.pinggy-free.link:34259 (changes on reconnect, auto-updated by worker)",
+        "permanent_url": "https://yaqeen-ad-copy.vercel.app/ (always live, even when PC off)",
         "processes": {
-            "api_server": "PID 3860 — localhost:5000",
+            "api_server": "PID 3860 — localhost:5000 (Waitress)",
             "tunnel_v4": "PID 13724 — auto-reconnect every 50 min",
-            "worker_daemon": "NOT RUNNING — needs creation"
+            "worker_daemon": "RUNNING — path: scripts/worker_daemon.py",
+            "startup": "Installed in shell:startup as YAQEEN_Startup.vbs"
+        },
+        "vercel": {
+            "url": "https://yaqeen-ad-copy.vercel.app/",
+            "status": "LIVE — all endpoints tested and working",
+            "deploy_trigger": "Push to GitHub master → auto-deploy",
+            "endpoints": {
+                "GET /health": "Returns JSON health status",
+                "GET /api": "HTML API documentation",
+                "POST /api/generate": "Ad copy generation (LLM via GitHub Models + fallback)",
+                "GET /api/sample": "Sample ad copy (no input needed)",
+                "POST /api/translate": "Translation EN/AR/FR (LLM)",
+                "POST /api/seo-report": "SEO audit report (LLM)"
+            },
+            "llm_source": "GitHub Models (gpt-4o-mini) via GITHUB_TOKEN env var on local, free API keys on Vercel (no token needed)"
         },
         "dealwork": {
             "listing_id": "f93fd81b-210e-4f53-8626-d6d62a81e18f",
             "listing_title": "Yaqeen AI - Ad Copy & SEO Agent (EN/AR/FR) - Live API",
-            "listing_status": "active",
+            "listing_status": "active — URL auto-updated by worker daemon",
             "bids_pending": 3,
-            "bid_total": "$33",
+            "bid_total": "$33 ($8 + $10 + $15)",
             "wallet": "$0.00",
-            "new_bids_attempted": ["SEO Audit ($25)", "Enterprise Sales Intelligence ($20)"],
-            "bid_api_endpoint": "POST /api/v1/jobs/{jobId}/bids",
-            "bid_format": {"proposedAmount": "string", "estimatedHours": "number", "proposalText": "string (50+ chars)"}
-        },
-        "hosting_alternatives_failed": [
-            "Render — user says it asks for credit card",
-            "ngrok — needs browser signup + authtoken",
-            "Pinggy HTTP proxy — Connection Reset on Windows",
-            "All tunnels require some form of account on this machine"
-        ],
-        "hosting_working": {
-            "type": "Pinggy TCP tunnel (free, no signup)",
-            "url": "tcp://rjmiw-105-190-196-114.run.pinggy-free.link:38551",
-            "limitation": "Clients must use HTTP/1.0 or raw TCP — standard HTTP libraries on Windows have issues",
-            "works_on": "Raw TCP sockets, HTTP/1.0 clients, likely works fine from Linux/Mac clients"
+            "auto_bidding": "Worker daemon scans jobs every 15 min and auto-bids on matching opportunities",
+            "url_update": "Worker daemon auto-updates listing URL when tunnel reconnects"
         },
         "revenue_generated": 0,
         "revenue_potential": {
             "dealwork_bids": "$33 (3 pending)",
-            "dealwork_new_bids": "$45 (2 attempted, hitting rate limits)",
-            "listing_orders": "$0.50 per ad copy (0 orders)"
+            "listing_orders": "$0.50 per ad copy (0 orders)",
+            "vercel_api": "Public, accessible to anyone with the URL"
         },
+        "autonomy_features": [
+            "Vercel deployment survives PC shutdown (always live)",
+            "Windows startup auto-restarts local services on boot",
+            "Worker daemon auto-bids on Dealwork jobs every 15 min",
+            "Worker daemon auto-updates listing URL after tunnel reconnect",
+            "Worker daemon monitors wallet for incoming payments"
+        ],
         "next_actions": [
-            "[HIGH] Create worker_daemon.py for auto-bidding on new Dealwork jobs",
-            "[HIGH] Try Koyeb free tier (no credit card needed per docs) for permanent hosting",
-            "[HIGH] Check Dealwork bid status daily (3 pending + 2 attempted)",
-            "[MEDIUM] Create GitHub Pages site for YAQEEN storefront",
-            "[MEDIUM] Monitor OpenServ Ideaboard for new ideas",
-            "[LOW] Check Moltbook for engagement on existing posts"
+            "[WAIT] For Dealwork bid acceptances ($33 pending)",
+            "[WAIT] For listing orders (0.50/ad copy)",
+            "[IMPROVE] Set GITHUB_TOKEN env var in Vercel dashboard for premium LLM source",
+            "[IMPROVE] Add more Dealwork listings for other services"
         ]
     },
     "git":  {
