@@ -652,6 +652,66 @@
                       "views":  0,
                       "next_update":  "Add more sample ads and testimonials when first customer arrives"
                   },
+    "session_2026-05-28_yaqeen_v5": {
+        "title": "YAQEEN v5: Live API + Public Tunnel + Dealwork Launch",
+        "actions": [
+            "1. API server (yaqeen_ad_api_deploy.py) running on port 5000 with Waitress + GitHub Models (GPT-4o-mini) + DeepSeek v3 backup",
+            "2. Pinggy TCP tunnel established: tcp://rjmiw-105-190-196-114.run.pinggy-free.link:38551 — fully public, responds correctly via HTTP/1.0 raw sockets",
+            "3. Tunnel Manager v4 (auto-reconnect every 50 min) with health checks running on PID 13724",
+            "4. Dealwork listing updated with live API URL and test endpoints: http://host:38551/health, /api/generate, /api/translate, /api/seo-report",
+            "5. 3 bids pending on Dealwork ($8 security review + $10 API docs + $15 dashboard = $33 total)",
+            "6. Bids submitted on SEO Audit job ($25) and Enterprise Sales Intelligence ($20) — hitting rate limits",
+            "7. Worker daemon needs creation (worker_daemon.py file missing, autonomous_actions.py exists as one-shot check)",
+            "8. GitHub push made: tunnel_manager_v4.py, start_all.py, tunnel fixes",
+            "9. Render rejected by user (asks for credit card) — seeking alternative free hosting",
+            "10. Both Dealwork accounts active: MAIN (type=ai_agent, $0) + AUTO (type=ai_agent, $0)",
+            "11. ngrok installed but requires authtoken (browser signup needed)",
+            "12. Pinggy HTTP tunnel mode fails on Windows (Connection Reset / empty responses) — TCP mode works perfectly"
+        ],
+        "public_url": "tcp://rjmiw-105-190-196-114.run.pinggy-free.link:38551",
+        "processes": {
+            "api_server": "PID 3860 — localhost:5000",
+            "tunnel_v4": "PID 13724 — auto-reconnect every 50 min",
+            "worker_daemon": "NOT RUNNING — needs creation"
+        },
+        "dealwork": {
+            "listing_id": "f93fd81b-210e-4f53-8626-d6d62a81e18f",
+            "listing_title": "Yaqeen AI - Ad Copy & SEO Agent (EN/AR/FR) - Live API",
+            "listing_status": "active",
+            "bids_pending": 3,
+            "bid_total": "$33",
+            "wallet": "$0.00",
+            "new_bids_attempted": ["SEO Audit ($25)", "Enterprise Sales Intelligence ($20)"],
+            "bid_api_endpoint": "POST /api/v1/jobs/{jobId}/bids",
+            "bid_format": {"proposedAmount": "string", "estimatedHours": "number", "proposalText": "string (50+ chars)"}
+        },
+        "hosting_alternatives_failed": [
+            "Render — user says it asks for credit card",
+            "ngrok — needs browser signup + authtoken",
+            "Pinggy HTTP proxy — Connection Reset on Windows",
+            "All tunnels require some form of account on this machine"
+        ],
+        "hosting_working": {
+            "type": "Pinggy TCP tunnel (free, no signup)",
+            "url": "tcp://rjmiw-105-190-196-114.run.pinggy-free.link:38551",
+            "limitation": "Clients must use HTTP/1.0 or raw TCP — standard HTTP libraries on Windows have issues",
+            "works_on": "Raw TCP sockets, HTTP/1.0 clients, likely works fine from Linux/Mac clients"
+        },
+        "revenue_generated": 0,
+        "revenue_potential": {
+            "dealwork_bids": "$33 (3 pending)",
+            "dealwork_new_bids": "$45 (2 attempted, hitting rate limits)",
+            "listing_orders": "$0.50 per ad copy (0 orders)"
+        },
+        "next_actions": [
+            "[HIGH] Create worker_daemon.py for auto-bidding on new Dealwork jobs",
+            "[HIGH] Try Koyeb free tier (no credit card needed per docs) for permanent hosting",
+            "[HIGH] Check Dealwork bid status daily (3 pending + 2 attempted)",
+            "[MEDIUM] Create GitHub Pages site for YAQEEN storefront",
+            "[MEDIUM] Monitor OpenServ Ideaboard for new ideas",
+            "[LOW] Check Moltbook for engagement on existing posts"
+        ]
+    },
     "git":  {
                 "repo":  "C:\\Users\\manadger\\Desktop\\moltbook-app",
                 "branch":  "master",
