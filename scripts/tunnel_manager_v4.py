@@ -23,55 +23,46 @@ def log(msg):
 
 def parse_url(url):
     url = url.replace("tcp://", "").replace("http://", "").replace("https://", "")
-    host, port = url.rsplit(":", 1)
-    return host, int(port)
+    # HTTP mode returns URL like https://prefix.pinggy.link, no port
+    if "/" in url:
+        url = url.split("/")[0]
+    if ":" in url:
+        host, port = url.rsplit(":", 1)
+        return host, int(port)
+    return url, 443
 
-def is_alive(host, port, timeout=12):
+def is_alive(url, timeout=12):
+    """HTTP health check via requests"""
     try:
-        s = socket.socket()
-        s.settimeout(timeout)
-        s.connect((host, port))
-        time.sleep(1)
-        s.send(b"GET /health HTTP/1.0\r\nHost: localhost\r\n\r\n")
-        for _ in range(10):
-            try:
-                d = s.recv(4096)
-                if b"200 OK" in d or b"status" in d:
-                    s.close()
-                    return True
-            except:
-                break
-        s.close()
-        return False
+        import requests
+        r = requests.get(f"{url}/health", timeout=timeout)
+        return r.status_code == 200
     except:
         return False
 
 def run_tunnel(port):
     log(f"Connecting tunnel on port {port}...")
-    tunnel = pinggy.start_tunnel(port, type="tcp")
+    tunnel = pinggy.start_tunnel(port, type="http")
     urls = tunnel.urls
     url = urls[0] if urls else str(urls)
     URL_FILE.write_text(url, encoding="utf-8")
-    host, pnum = parse_url(url)
     log(f"PUBLIC URL: {url}")
-    return url, host, pnum, tunnel
+    return url, tunnel
 
 if __name__ == "__main__":
     import sys
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
-    log(f"=== Yaqeen Tunnel v4 (health-check loop) ===")
+    log(f"=== Yaqeen Tunnel v4 (HTTP mode) ===")
     
     while True:
         try:
-            url, host, pnum, tunnel = run_tunnel(port)
+            url, tunnel = run_tunnel(port)
             
-            # Monitor: check every 60s, restart at 50 min or if dead
             for minute in range(50):
-                for _ in range(60):  # 60 seconds * 50 minutes = 3000 iterations
+                for _ in range(60):
                     time.sleep(1)
                 
-                # Every 60s, check if alive
-                if not is_alive(host, pnum):
+                if not is_alive(url):
                     log(f"Tunnel dead at minute {minute+1}, reconnecting...")
                     tunnel = None
                     break
@@ -79,7 +70,7 @@ if __name__ == "__main__":
                     log(f"Tunnel OK at minute {minute+1}")
             
             if tunnel:
-                log(f"50-min cycle complete, restarting tunnel...")
+                log(f"50-min cycle complete, restarting...")
                 tunnel = None
                 
         except Exception as e:

@@ -34,9 +34,9 @@ def start_api():
     return proc
 
 def start_tunnel():
-    log("Starting Pinggy TCP tunnel...")
+    log("Starting Pinggy HTTP tunnel...")
     proc = subprocess.Popen(
-        [sys.executable, str(SCRIPTS / "tunnel_manager_v2.py"), "5000"],
+        [sys.executable, str(SCRIPTS / "tunnel_manager_v4.py"), "5000"],
         stdout=open(MEMORY / "tunnel.log", "a"),
         stderr=subprocess.STDOUT,
         creationflags=subprocess.CREATE_NO_WINDOW

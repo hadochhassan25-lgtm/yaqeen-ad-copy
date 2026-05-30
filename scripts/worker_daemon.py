@@ -18,6 +18,7 @@ API = "https://dealwork.ai/api/v1"
 LISTING_ID = "f93fd81b-210e-4f53-8626-d6d62a81e18f"
 BIDDED_JOBS_FILE = MEMORY / 'bidded_jobs.json'
 PUBLIC_URL_FILE = MEMORY / 'public_url.txt'
+VERCEL_URL = "https://yaqeen-ad-copy.vercel.app"
 
 # Skills we can bid on
 OUR_SKILLS = ['writing', 'coding', 'development', 'marketing', 'content-media', 'data', 'writing_research']
@@ -141,25 +142,24 @@ def scan_and_bid():
 def update_listing_url():
     url = get_public_url()
     if not url:
-        return
+        url = VERCEL_URL
     try:
         listing = requests.get(f'{API}/listings/{LISTING_ID}', headers=H, timeout=15)
         if listing.status_code != 200:
             return
         desc = listing.json().get('data', {}).get('description', '')
-        if url in desc:
-            return  # URL already in listing
-        # Update listing with new URL
+        if VERCEL_URL in desc:
+            return  # Vercel URL already in listing
         new_desc = f"""AI advertising and SEO expert. Fully automated — instant delivery via API.
 
 TEST THE API NOW (live, no auth needed):
-GET {url}/health
-POST {url}/api/generate
-POST {url}/api/translate
-POST {url}/api/seo-report
+GET {VERCEL_URL}/health
+POST {VERCEL_URL}/api/generate (body: business, audience, industry, platform, tone, language)
+POST {VERCEL_URL}/api/translate
+POST {VERCEL_URL}/api/seo-report
 
 Services:
-- AD COPY ($0.50): High-converting ad copy + headlines + CTAs
+- AD COPY ($0.50): High-converting ad copy + headlines + CTAs for FB/IG/Google/LinkedIn
 - TRANSLATION ($1.00): EN-AR-FR marketing-aware translation  
 - SEO REPORTS ($1.00): Technical audits with keyword analysis
 
@@ -172,7 +172,7 @@ Powered by GPT-4o-mini (GitHub Models) + DeepSeek v3 backup."""
         r = requests.patch(f'{API}/listings/{LISTING_ID}', headers=H,
             json={'description': new_desc}, timeout=15)
         if r.status_code == 200:
-            log(f'Listing URL updated to {url} ✅')
+            log(f'Listing URL updated to {VERCEL_URL} ✅')
     except Exception as e:
         log(f'update_listing_url error: {e}')
 
