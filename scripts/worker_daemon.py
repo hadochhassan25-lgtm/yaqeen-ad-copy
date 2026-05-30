@@ -17,13 +17,40 @@ H = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 API = "https://dealwork.ai/api/v1"
 LISTING_ID = "f93fd81b-210e-4f53-8626-d6d62a81e18f"
 BIDDED_JOBS_FILE = MEMORY / 'bidded_jobs.json'
+BID_RESULTS_FILE = MEMORY / 'bid_results.json'
 PUBLIC_URL_FILE = MEMORY / 'public_url.txt'
 VERCEL_URL = "https://yaqeen-ad-copy.vercel.app"
 
-# Skills we can bid on
-OUR_SKILLS = ['writing', 'coding', 'development', 'marketing', 'content-media', 'data', 'writing_research']
-KEYWORDS = ['seo', 'translation', 'api', 'python', 'flask', 'content', 'copy', 'documentation',
-            'arabic', 'french', 'english', 'react', 'dashboard', 'automation', 'script']
+OUR_SKILLS = ['writing', 'coding', 'development', 'marketing', 'content-media', 'data', 'writing_research', 'design', 'tech-support']
+
+KEYWORDS = [
+    'seo', 'translation', 'api', 'python', 'flask', 'content', 'copy', 'documentation',
+    'arabic', 'french', 'english', 'react', 'dashboard', 'automation', 'script',
+    'marketing', 'ad', 'copywriting', 'content writing', 'blog', 'article',
+    'telegram bot', 'discord bot', 'scraping', 'data entry', 'web scraping',
+    'landing page', 'html', 'css', 'javascript', 'node', 'flask api',
+    'rest api', 'integration', 'webhook', 'crypto', 'blockchain', 'wallet',
+    'chatbot', 'ai', 'gpt', 'llm', 'openai', 'claude',
+    'excel', 'google sheets', 'power bi', 'data analysis',
+    'virtual assistant', 'va', 'customer support', 'tech support',
+    'wordpress', 'shopify', 'wix', 'web design',
+    'social media', 'facebook ads', 'google ads', 'instagram',
+    'proofreading', 'editing', 'transcription', 'research'
+]
+
+PROPOSAL_TEMPLATES = {
+    'writing': 'I specialize in marketing copy, ad copy, SEO content, and technical documentation. I deliver clean, native-quality writing in English, Arabic, and French. Fast turnaround, revisions included.',
+    'coding': 'Full-stack developer (Python, Flask, React, Node.js, APIs). I build automations, scrapers, dashboards, bots, and backends. Experience deploying on Vercel and managing cloud infra. Clean code, tested, delivered on time.',
+    'development': 'Full-stack developer with strong experience in Python, Flask, React, and API development. I deliver production-ready code with documentation and tests. Fast turnaround for tight deadlines.',
+    'marketing': 'Digital marketing specialist: SEO audits, ad copy (Facebook/Google/LinkedIn/IG), content strategy, and marketing automation. I help businesses get more traffic and conversions with data-driven copy.',
+    'content-media': 'Content creator and writer: blog posts, social media content, ad copy, newsletters, and video scripts. I write for engagement and conversions. Native English/Arabic/French.',
+    'data': 'Data analyst and automation specialist: Python, Excel, Google Sheets, Power BI, web scraping, data cleaning, and visualization. I turn raw data into actionable insights.',
+    'writing_research': 'Research writer: I produce well-researched articles, reports, documentation, and technical content. Background in technical writing and academic research. Citations included.',
+    'design': 'Web and graphic designer: landing pages, social media creatives, branding, and UI mockups. HTML/CSS, Figma, Canva. Fast iterations based on feedback.',
+    'tech-support': 'Technical support specialist: troubleshooting, system admin, API integration, deployment, and debugging. I resolve issues fast with clear communication.'
+}
+
+DEFAULT_PROPOSAL = 'I can deliver this project with high quality and fast turnaround. I have strong experience in similar work and I communicate clearly. Let me know if you have questions — I\'m ready to start.'
 
 def log(msg):
     t = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -83,13 +110,36 @@ def check_listing_requests():
         pass
     return 0
 
+def load_bid_results():
+    if BID_RESULTS_FILE.exists():
+        return json.loads(BID_RESULTS_FILE.read_text())
+    return {'won': 0, 'lost': 0, 'pending': 0, 'total_spent': 0, 'history': []}
+
+def save_bid_results(data):
+    BID_RESULTS_FILE.write_text(json.dumps(data, indent=2))
+
+def build_proposal(title, cat, budget):
+    tmpl = PROPOSAL_TEMPLATES.get(cat, DEFAULT_PROPOSAL)
+    title_short = title[:60] if len(title) > 60 else title
+    if budget > 100:
+        proposal = f"I have strong experience delivering {title_short}. {tmpl} I'm available to start immediately and work within your budget. Let's schedule a quick call to discuss requirements."
+    elif budget > 20:
+        proposal = f"I can handle {title_short}. {tmpl} Available now, fast turnaround. Happy to discuss details."
+    else:
+        proposal = f"I can do this. {tmpl}"
+    return proposal[:500]
+
 def scan_and_bid():
     try:
         bidded = load_bidded()
+        br = load_bid_results()
         r = requests.get(f'{API}/jobs?per_page=50', headers=H, timeout=15)
         if r.status_code != 200:
             return
         jobs = r.json().get('data', [])
+        if not jobs:
+            log('No jobs found on Dealwork')
+            return
         new_bids = 0
         for j in jobs:
             jid = j.get('id', '')
@@ -99,12 +149,13 @@ def scan_and_bid():
             cat = j.get('category', '')
             bmin = float(j.get('budgetMin') or 0)
             bmax = float(j.get('budgetMax') or 0)
-            # Skip Chinese agent listings
-            if any(x in title for x in ['可可', '枭', 'chinese', 'chinois', 'bilingual']):
+            budget_avg = (bmin + bmax) / 2
+            if budget_avg == 0:
+                budget_avg = 25
+            if any(x in title for x in ['可可', '枭', 'chinese', 'chinois']):
                 continue
             if any(x in title for x in ['ai agent', '24/7 ai']):
                 continue
-            # Match against our skills
             matched = False
             if cat in OUR_SKILLS:
                 matched = True
@@ -114,26 +165,28 @@ def scan_and_bid():
                     break
             if not matched:
                 continue
-            # Auto-bid
-            amount = min(max(bmin, 15), 50)
-            hours = max(1, int(amount / 8))
-            proposal = f"I can deliver this. I have experience in {cat} with fast turnaround. Quality work, delivered on time."
-            if len(proposal) < 50:
-                proposal = proposal + " Contact me to discuss details and timeline for your project."
+            amount = min(max(bmin, 15), 75)
+            if budget_avg > 50:
+                amount = min(budget_avg * 0.7, 75)
+            hours = max(1, int(amount / 10))
+            proposal = build_proposal(title, cat, budget_avg)
             try:
                 resp = requests.post(f'{API}/jobs/{jid}/bids', headers=H,
-                    json={'proposedAmount': str(amount), 'estimatedHours': hours, 'proposalText': proposal}, timeout=15)
+                    json={'proposedAmount': str(round(amount, 2)), 'estimatedHours': hours, 'proposalText': proposal}, timeout=15)
                 bidded.add(jid)
                 save_bidded(bidded)
                 if resp.status_code in (200, 201):
-                    log(f'AUTO-BID ${amount} on {title[:40]} ✅')
+                    log(f'AUTO-BID ${round(amount,2)} on {title[:40]} ✅')
                     new_bids += 1
+                    br['history'].append({'job': title[:60], 'amount': round(amount, 2), 'status': 'pending', 'time': time.strftime('%Y-%m-%d %H:%M')})
                 else:
                     err = resp.text[:80]
-                    log(f'AUTO-BID ${amount} on {title[:40]} ❌ {err}')
+                    log(f'AUTO-BID ${round(amount,2)} on {title[:40]} ❌ {err}')
+                    br['history'].append({'job': title[:60], 'amount': round(amount, 2), 'status': 'failed', 'error': err, 'time': time.strftime('%Y-%m-%d %H:%M')})
             except Exception as e:
                 log(f'AUTO-BID error on {title[:40]}: {e}')
-            time.sleep(3)  # Rate limit
+            time.sleep(2.5)
+        save_bid_results(br)
         if new_bids > 0:
             log(f'{new_bids} new bids submitted this cycle')
     except Exception as e:
@@ -248,6 +301,12 @@ def main():
         update_listing_url()
         avail, locked = check_wallet()
         crypto = check_crypto_payments()
+        br = load_bid_results()
+        br['pending'] = sum(1 for h in br.get('history', []) if h.get('status') == 'pending')
+        br['won'] = sum(1 for h in br.get('history', []) if h.get('status') == 'won')
+        br['lost'] = sum(1 for h in br.get('history', []) if h.get('status') == 'lost')
+        save_bid_results(br)
+        log(f'Bid stats: {br.get("won",0)} won / {br.get("lost",0)} lost / {br.get("pending",0)} pending')
         save_state({
             'cycle': cycle,
             'pending_bids': len(bids),
@@ -255,6 +314,8 @@ def main():
             'wallet_available': avail,
             'wallet_locked': locked,
             'paid_invoices': len(load_paid()),
+            'bids_won': br.get('won', 0),
+            'bids_lost': br.get('lost', 0),
             'last_check': time.strftime('%Y-%m-%d %H:%M:%S')
         })
         # Check every 15 minutes
