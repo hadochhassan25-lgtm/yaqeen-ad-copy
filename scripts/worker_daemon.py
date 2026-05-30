@@ -190,6 +190,41 @@ def check_wallet():
         pass
     return 0, 0
 
+CRYPTO_WALLET = os.environ.get('WALLET_ADDRESS', '0xD0366D78055b8c637c44d769D1A1371106d13552')
+CRYPTO_CHAIN = os.environ.get('CHAIN', 'base')
+PAID_INVOICES_FILE = MEMORY / 'paid_invoices.json'
+
+def load_paid():
+    if PAID_INVOICES_FILE.exists():
+        return set(json.loads(PAID_INVOICES_FILE.read_text()))
+    return set()
+
+def save_paid(ids):
+    PAID_INVOICES_FILE.write_text(json.dumps(list(ids)))
+
+def check_crypto_payments():
+    try:
+        sys.path.insert(0, str(BASE / 'services'))
+        from payment_bridge import check_all_invoices, stop
+        result = check_all_invoices()
+        stop()
+        paid_invoices = [inv for inv in result.get('invoices', []) if inv.get('status') == 'paid']
+        already = load_paid()
+        for inv in paid_invoices:
+            iid = inv['id']
+            if iid not in already:
+                amount = inv.get('amount', '?')
+                log(f'💰 PAYMENT RECEIVED: ${amount} USDC | Invoice: {iid}')
+                already.add(iid)
+                save_paid(already)
+        bal = result.get('total', 0)
+        pd = result.get('paid', 0)
+        log(f'Crypto: {pd}/{bal} invoices paid | Wallet: {CRYPTO_WALLET[:16]}...')
+        return result
+    except Exception as e:
+        log(f'check_crypto_payments error: {e}')
+        return None
+
 def save_state(data):
     STATE.write_text(json.dumps(data, indent=2))
 
@@ -201,6 +236,7 @@ def load_state():
 def main():
     log('YAQEEN Worker Daemon started')
     log(f'API Key: {API_KEY[:20]}...')
+    log(f'Crypto Wallet: {CRYPTO_WALLET[:16]}... on {CRYPTO_CHAIN}')
     cycle = 0
     while True:
         cycle += 1
@@ -211,12 +247,14 @@ def main():
         scan_and_bid()
         update_listing_url()
         avail, locked = check_wallet()
+        crypto = check_crypto_payments()
         save_state({
             'cycle': cycle,
             'pending_bids': len(bids),
             'pending_requests': pending,
             'wallet_available': avail,
             'wallet_locked': locked,
+            'paid_invoices': len(load_paid()),
             'last_check': time.strftime('%Y-%m-%d %H:%M:%S')
         })
         # Check every 15 minutes

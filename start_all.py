@@ -44,6 +44,18 @@ def start_tunnel():
     PROCESSES["tunnel"] = proc
     return proc
 
+def start_bridge():
+    log("Starting payment bridge (Node.js)...")
+    proc = subprocess.Popen(
+        ["node", str(SERVICES / "payment-bridge" / "bridge.js")],
+        stdout=open(MEMORY / "bridge.log", "a"),
+        stderr=subprocess.STDOUT,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+        env={**os.environ}
+    )
+    PROCESSES["bridge"] = proc
+    return proc
+
 def start_worker():
     log("Starting Dealwork worker daemon...")
     proc = subprocess.Popen(
@@ -75,10 +87,11 @@ def check_running(pid):
 def status():
     log("=== Yaqeen System Status ===")
     api = check_running(PROCESSES.get("api", None) and PROCESSES["api"].pid)
+    bridge = check_running(PROCESSES.get("bridge", None) and PROCESSES["bridge"].pid)
     tunnel = check_running(PROCESSES.get("tunnel", None) and PROCESSES["tunnel"].pid)
     worker = check_running(PROCESSES.get("worker", None) and PROCESSES["worker"].pid)
     
-    for name, running in [("API", api), ("Tunnel", tunnel), ("Worker", worker)]:
+    for name, running in [("API", api), ("Bridge", bridge), ("Tunnel", tunnel), ("Worker", worker)]:
         log(f"  {name}: {'✅' if running else '❌'}")
 
 if __name__ == "__main__":
@@ -86,6 +99,8 @@ if __name__ == "__main__":
     if cmd == "start":
         start_api()
         time.sleep(3)
+        start_bridge()
+        time.sleep(2)
         start_tunnel()
         time.sleep(3)
         start_worker()

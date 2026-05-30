@@ -1,0 +1,12 @@
+{
+  "name": "yaqeen-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "YAQEEN AI Agent - Payment bridge & services",
+  "scripts": {
+    "bridge": "node services/payment-bridge/bridge.js"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  }
+}
