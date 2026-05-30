@@ -57,11 +57,13 @@ def start_bridge():
     return proc
 
 def start_worker():
-    log("Starting Dealwork worker daemon...")
+    log("Starting YAQEEN worker daemon (Python)...")
+    env = os.environ.copy()
     proc = subprocess.Popen(
-        ["node", str(Path.home() / ".openwork" / "openwork-worker.js"), "--daemon"],
-        stdout=open(Path.home() / ".openwork" / "worker.log", "a"),
+        [sys.executable, str(SCRIPTS / "worker_daemon.py")],
+        stdout=open(MEMORY / "worker_daemon.log", "a"),
         stderr=subprocess.STDOUT,
+        env=env,
         creationflags=subprocess.CREATE_NO_WINDOW
     )
     PROCESSES["worker"] = proc
