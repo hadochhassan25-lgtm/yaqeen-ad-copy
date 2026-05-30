@@ -57,7 +57,7 @@ def start_bridge():
     return proc
 
 def start_worker():
-    log("Starting YAQEEN worker daemon (Python)...")
+    log("Starting Dealwork worker daemon...")
     env = os.environ.copy()
     proc = subprocess.Popen(
         [sys.executable, str(SCRIPTS / "worker_daemon.py")],
@@ -69,12 +69,42 @@ def start_worker():
     PROCESSES["worker"] = proc
     return proc
 
+def start_toku_worker():
+    log("Starting Toku worker daemon...")
+    env = os.environ.copy()
+    proc = subprocess.Popen(
+        [sys.executable, str(SCRIPTS / "worker_daemon_toku.py")],
+        stdout=open(MEMORY / "toku_daemon.log", "a"),
+        stderr=subprocess.STDOUT,
+        env=env,
+        creationflags=subprocess.CREATE_NO_WINDOW
+    )
+    PROCESSES["toku_worker"] = proc
+    return proc
+
+def start_tat_earner():
+    log("Starting TAT earner daemon...")
+    env = os.environ.copy()
+    proc = subprocess.Popen(
+        [sys.executable, str(SCRIPTS / "tat_earner.py")],
+        stdout=open(MEMORY / "tat_earner.log", "a"),
+        stderr=subprocess.STDOUT,
+        env=env,
+        creationflags=subprocess.CREATE_NO_WINDOW
+    )
+    PROCESSES["tat_earner"] = proc
+    return proc
+
 def stop_all():
     for name, proc in PROCESSES.items():
         log(f"Stopping {name}...")
         proc.terminate()
     log("Waiting for processes to stop...")
     time.sleep(3)
+    if "toku_worker" in PROCESSES:
+        PROCESSES["toku_worker"].terminate()
+    if "tat_earner" in PROCESSES:
+        PROCESSES["tat_earner"].terminate()
     log("All stopped.")
 
 def check_running(pid):
@@ -92,8 +122,10 @@ def status():
     bridge = check_running(PROCESSES.get("bridge", None) and PROCESSES["bridge"].pid)
     tunnel = check_running(PROCESSES.get("tunnel", None) and PROCESSES["tunnel"].pid)
     worker = check_running(PROCESSES.get("worker", None) and PROCESSES["worker"].pid)
+    toku = check_running(PROCESSES.get("toku_worker", None) and PROCESSES["toku_worker"].pid)
+    tat = check_running(PROCESSES.get("tat_earner", None) and PROCESSES["tat_earner"].pid)
     
-    for name, running in [("API", api), ("Bridge", bridge), ("Tunnel", tunnel), ("Worker", worker)]:
+    for name, running in [("API", api), ("Bridge", bridge), ("Tunnel", tunnel), ("Worker", worker), ("Toku", toku), ("TAT", tat)]:
         log(f"  {name}: {'✅' if running else '❌'}")
 
 if __name__ == "__main__":
@@ -106,7 +138,11 @@ if __name__ == "__main__":
         start_tunnel()
         time.sleep(3)
         start_worker()
-        log("All services started.")
+            time.sleep(2)
+        start_toku_worker()
+        time.sleep(2)
+        start_tat_earner()
+    log("All services started.")
     elif cmd == "stop":
         stop_all()
     elif cmd == "status":
