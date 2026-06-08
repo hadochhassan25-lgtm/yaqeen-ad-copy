@@ -162,6 +162,48 @@ Price: $1.00 USDC | Wallet: 0xD0366D78055b8c637c44d769D1A1371106d13552"""
     is_llm = "LCP" not in report[:100] if len(report) > 100 else False
     return jsonify({'success': True, 'data': {'report': report, 'generated_by': 'llm' if is_llm else 'template', 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 1.00, 'paypal': 'https://paypal.me/lamti'}}})
 
+_GH_TOKEN = os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN', '')
+
+@app.route('/api/ghostwriter', methods=['POST'])
+def ghostwriter():
+    data = request.get_json()
+    if not data or 'client' not in data or 'industry' not in data:
+        return jsonify({'success': False, 'error': 'client and industry required'}), 400
+    client = data['client']
+    industry = data['industry'].lower()
+    industries = {"tech", "marketing", "saas", "consulting"}
+    if industry not in industries:
+        return jsonify({'success': False, 'error': f'Industry must be one of: {", ".join(sorted(industries))}'}), 400
+    tones = {"tech": "authoritative, forward-looking", "marketing": "practical, results-oriented", "saas": "strategic, metrics-aware", "consulting": "authoritative, actionable"}
+    types_list = ["thought_leadership", "industry_opinion", "personal_story", "tip_tutorial", "trend_analysis", "thread_opener"]
+    topics_map = {"tech": ["AI transformation", "scaling infrastructure", "developer experience", "tech leadership"], "marketing": ["growth strategies", "content marketing", "conversion optimization", "brand building"], "saas": ["product-led growth", "customer success", "fundraising", "go-to-market"], "consulting": ["client acquisition", "delivery excellence", "thought leadership", "scaling services"]}
+    topics = topics_map[industry]
+    system = f"You are a LinkedIn ghostwriter for {client}, a {industry} leader. Tone: {tones[industry]}."
+    prompt = (
+        f"Write 7 LinkedIn posts for {client}, one per topic. "
+        f"Each post: 150-250 words, hook + insight + engagement call. "
+        f"Topics: {', '.join(topics)}. "
+        f"Types: {', '.join(types_list[:len(topics)])}. "
+        f"Format as JSON array: [{{\"day\":1,\"type\":\"...\",\"topic\":\"...\",\"body\":\"...\"}}, ...]"
+    )
+    try:
+        resp = requests.post(
+            "https://models.inference.ai.azure.com/chat/completions",
+            json={"model": "gpt-4o-mini", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "max_tokens": 3000, "temperature": 0.7},
+            headers={"Authorization": f"Bearer {_GH_TOKEN}"}, timeout=120
+        )
+        if resp.status_code == 200:
+            raw = resp.json()["choices"][0]["message"]["content"].strip()
+            import re as re2
+            m = re2.search(r'\[[\s\S]*\]', raw)
+            if m:
+                posts = json.loads(m.group(0))
+                return jsonify({'success': True, 'data': {'posts': posts, 'count': len(posts), 'client': client, 'industry': industry, 'payment': {'wallet': '0xD0366D78055b8c637c44d769D1A1371106d13552', 'amount_usdc': 2.00, 'paypal': 'https://paypal.me/lamti'}}})
+            return jsonify({'success': False, 'error': f'No JSON found in response: {raw[:300]}'}), 500
+        return jsonify({'success': False, 'error': f'API HTTP {resp.status_code}: {resp.text[:200]}'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     print(f'Starting YAQEEN Ad Copy API on port {port} with waitress...')

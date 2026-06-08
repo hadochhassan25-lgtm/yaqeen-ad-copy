@@ -7,6 +7,6 @@
     "bridge": "node services/payment-bridge/bridge.js"
   },
   "dependencies": {
-    "viem": "^2.21.0"
+    "viem": "^2.51.3"
   }
 }

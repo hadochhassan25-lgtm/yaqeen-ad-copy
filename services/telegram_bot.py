@@ -45,13 +45,39 @@ def env_load():
 
 TOKEN, OWNER, WALLET, GOOGLE_KEY, GROQ_KEY, GITHUB_TOKEN = env_load()
 
-# Free LLM API keys (public, OpenAI-compatible) — daily rotation
+# Free LLM API keys (public, OpenAI-compatible) — auto-refreshed
 KEYWAY_URL = "https://aiapiv2.pekpik.com/v1"
-KEYWAY_KEYS = [
-    "sk-9Qmoijsq2Ty3f3VeJDKidpNdmDVejMnt1Rp8HIGiHBf29fH5",  # smart-chat $20
-    "sk-vgETCmYagldBKy6tZqGBT3mmNKki4ARSkJVZ7XdzAe8qsdFC",  # smart-chat $20
-    "sk-Q3bZ99lB1FbByeh8sgik89R5pe0Ddwnom7K41RPXA7im5BvA",  # smart-chat $20
-]
+KEYWAY_KEYS = []
+KEY_LAST_REFRESH = 0
+
+def refresh_keys():
+    """Fetch fresh API keys from free-llm-api-keys repo every hour"""
+    global KEYWAY_KEYS, KEY_LAST_REFRESH
+    urls = [
+        "https://raw.githubusercontent.com/alistaitsacle/free-llm-api-keys/main/README.md",
+        "https://raw.githubusercontent.com/alistaitsacle/free-llm-api-keys/main/README.md?t=" + str(int(time.time())),
+    ]
+    all_keys = []
+    for url in urls:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            resp = urllib.request.urlopen(req, timeout=15)
+            html = resp.read().decode("utf-8")
+            found = re.findall(r"sk-[a-zA-Z0-9]{47}[a-zA-Z0-9]", html)
+            for k in found:
+                if k not in all_keys:
+                    all_keys.append(k)
+        except:
+            continue
+    if all_keys:
+        KEYWAY_KEYS = all_keys
+        KEY_LAST_REFRESH = time.time()
+        print(f"[KEY] Refreshed {len(all_keys)} keys")
+    elif not KEYWAY_KEYS:
+        KEYWAY_KEYS = [  # hardcoded fallback
+            "sk-placeholder1",
+            "sk-placeholder2",
+        ]
 if not TOKEN: print("TELEGRAM_BOT_TOKEN not set"); sys.exit(1)
 
 bot = telebot.TeleBot(TOKEN)
@@ -63,12 +89,15 @@ PRICES = {
     "article": {"usd": 3, "mad": 30},
 }
 
-WELCOME = """*🤖 YAQEEN AI* — ذكاء اصطناعي مغربي
+WELCOME = """*🤖 يقين* — الذكاء الاصطناعي المغربي
 
-أنا يقين، AI chat مثل ChatGPT. اسألني أي شيء!
+أنا *يقين*، أول ذكاء اصطناعي مغربي بالكامل.
+صممتي شركة *منادجر تك* للبرمجة وحلول الويب.
+
+أقدر أساعدك في أي شيء — فقط اسألني!
 
 *الأوامر:*
-💬 *أرسل أي نص* — وأنا أرد كـ ChatGPT
+💬 *أرسل أي نص* — وأنا نرد عليك
 /chat — تشغيل/إيقاف وضع المحادثة
 
 *الخدمات المدفوعة:*
@@ -86,37 +115,45 @@ chat_mode = {}  # uid -> bool
 # === AI chat function ===
 HDR = {"Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
-def call_ai_chat(messages, model="keyway"):
-    """Chat with AI. messages = [{"role":"user"/"assistant", "content":"..."}]"""
-    if model == "keyway":
-        for kw_key in KEYWAY_KEYS:
-            try:
-                data = json.dumps({"model": "smart-chat", "messages": messages, "max_tokens": 2048}).encode()
-                req = urllib.request.Request(f"{KEYWAY_URL}/chat/completions", data=data,
-                    headers={**HDR, "Authorization": f"Bearer {kw_key}"})
-                resp = urllib.request.urlopen(req, timeout=30)
-                r = json.loads(resp.read())
-                return r["choices"][0]["message"]["content"]
-            except Exception:
-                continue
-        # Fall through to next provider
+def clean_text(t):
+    """Remove unwanted non-Arabic/Latin scripts (Cyrillic, Thai, CJK, etc)"""
+    import re
+    # Remove Cyrillic \u0400-\u04FF (Russian etc), Thai \u0E00-\u0E7F, CJK \u4E00-\u9FFF
+    garbage = re.compile(r'[\u0400-\u04FF\u0E00-\u0E7F\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]', re.UNICODE)
+    return garbage.sub('', t).strip()
 
-    if model == "groq" and GROQ_KEY:
+def call_ai_chat(messages, model="auto"):
+    """Chat with AI. Tries Keyway free keys first, then Groq, then GitHub Models."""
+    errs = []
+
+    # 1. Try free keys from repo
+    for kw_key in KEYWAY_KEYS:
+        try:
+            data = json.dumps({"model": "smart-chat", "messages": messages, "max_tokens": 2048}).encode()
+            req = urllib.request.Request(f"{KEYWAY_URL}/chat/completions", data=data,
+                headers={**HDR, "Authorization": f"Bearer {kw_key}"})
+            resp = urllib.request.urlopen(req, timeout=15)
+            r = json.loads(resp.read())
+            return r["choices"][0]["message"]["content"]
+        except:
+            continue
+
+    # 2. Try Groq
+    if GROQ_KEY:
         try:
             data = json.dumps({"model": "llama-3.3-70b-versatile", "messages": messages}).encode()
             req = urllib.request.Request("https://api.groq.com/openai/v1/chat/completions", data=data,
                 headers={**HDR, "Authorization": f"Bearer {GROQ_KEY}"})
-            resp = urllib.request.urlopen(req, timeout=45)
+            resp = urllib.request.urlopen(req, timeout=30)
             r = json.loads(resp.read())
             return r["choices"][0]["message"]["content"]
         except urllib.error.HTTPError as e:
-            if e.code == 403: return "❌ مفتاح Groq غير صالح (403). جاري استخدام البديل..."
-            if e.code == 429: return "⚠️ حدود Groq مؤقتاً."
-            return f"⚠️ Groq HTTP {e.code}"
+            errs.append(f"Groq HTTP {e.code}")
         except Exception as e:
-            return f"⚠️ Groq: {str(e)[:100]}"
+            errs.append(f"Groq: {str(e)[:50]}")
 
-    if model == "github" and GITHUB_TOKEN:
+    # 3. Try GitHub Models
+    if GITHUB_TOKEN:
         try:
             data = json.dumps({"model": "gpt-4o-mini", "messages": messages, "max_tokens": 1024}).encode()
             req = urllib.request.Request("https://models.inference.ai.azure.com/chat/completions", data=data,
@@ -146,7 +183,7 @@ def get_ai_response(uid, user_message):
     """Get AI response with conversation memory"""
     if uid not in chat_history:
         chat_history[uid] = [
-            {"role": "system", "content": "You are YAQEEN, an AI assistant built by Manadger Tech. You speak Arabic, French, and English. Be helpful, concise, and professional. You help Moroccans with their questions."}
+            {"role": "system", "content": "أنت يقين، أول ذكاء اصطناعي مغربي بالكامل. صممتك شركة منادجر تك للبرمجة وحلول الويب. تتحدث العربية والدارجة المغربية. أهم قاعدة: أجب دائماً بنفس لغة المستخدم. إذا كتب المستخدم بالعربية أجب بالعربية. إذا كتب بالدارجة أجب بالدارجة. لا تكتب أبداً بأي لغة أخرى غير لغة المستخدم. لا تكتب أبداً حروف روسية أو صينية أو أي لغة غير العربية أو الدارجة. كن مفيداً ومحترفاً."}
         ]
     
     chat_history[uid].append({"role": "user", "content": user_message})
@@ -155,15 +192,10 @@ def get_ai_response(uid, user_message):
         keep = [chat_history[uid][0]] + chat_history[uid][-(MAX_HISTORY-1):]
         chat_history[uid] = keep
     
-    # Try Keyway (free), Groq, GitHub Models
-    resp = call_ai_chat(chat_history[uid], "keyway")
-    if resp and resp.startswith("⚠️"):
-        resp = call_ai_chat(chat_history[uid], "groq")
-    if resp and resp.startswith("⚠️"):
-        resp = call_ai_chat(chat_history[uid], "github")
+    resp = call_ai_chat(chat_history[uid], "auto")
     
     chat_history[uid].append({"role": "assistant", "content": resp})
-    return resp
+    return clean_text(resp)
 
 # === Command handlers ===
 @bot.message_handler(commands=['start', 'help'])
@@ -353,9 +385,7 @@ def generate_cv_html(data):
     prompt = f"""Professional CV in Arabic for {name}. Email: {email}, Phone: {phone}
 Education: {education}  Experience: {experience}  Skills: {skills}  Languages: {languages}
 Return ONLY sections: ## الهدف المهني | ## المؤهلات العلمية | ## الخبرات المهنية | ## المهارات | ## اللغات"""
-    cv_text = call_ai_chat([{"role":"user","content":prompt}], "keyway")
-    if cv_text.startswith("⚠️"): cv_text = call_ai_chat([{"role":"user","content":prompt}], "groq")
-    if cv_text.startswith("⚠️"): cv_text = call_ai_chat([{"role":"user","content":prompt}], "github")
+    cv_text = call_ai_chat([{"role":"user","content":prompt}], "auto")
     skill_items = skills.replace("،",",").split(",")
     skill_badges = "\n".join([f'        <span class="badge">{s.strip()}</span>' for s in skill_items if s.strip()])
     html = f"""<!DOCTYPE html>
@@ -413,10 +443,8 @@ def generate_cv(m, data):
         bot.reply_to(m, f"عذراً: {e}")
 
 def gen_ai(prompt):
-    r = call_ai_chat([{"role":"user","content":prompt}], "keyway")
-    if r.startswith("⚠️"): r = call_ai_chat([{"role":"user","content":prompt}], "groq")
-    if r.startswith("⚠️"): r = call_ai_chat([{"role":"user","content":prompt}], "github")
-    return r
+    r = call_ai_chat([{"role":"user","content":prompt}], "auto")
+    return clean_text(r)
 
 def generate_cover(m, info):
     bot.send_chat_action(m.chat.id, "typing")
@@ -443,38 +471,32 @@ def generate_translate(m, text):
 @bot.message_handler(func=lambda m: m.text and not m.text.startswith('/'))
 def chat_handler(m):
     uid = m.from_user.id
-    # If chat_mode is ON for this user, or if it's a reply to bot
-    if chat_mode.get(uid, False) or (m.reply_to_message and m.reply_to_message.from_user.id == bot.get_me().id):
-        bot.send_chat_action(m.chat.id, "typing")
-        resp = get_ai_response(uid, m.text)
-        # Split long messages
-        if len(resp) > 4000:
-            for i in range(0, len(resp), 3000):
-                bot.reply_to(m, resp[i:i+3000])
-        else:
-            bot.reply_to(m, resp)
-    elif not chat_mode.get(uid, False) and not m.reply_to_message:
-        # First time: ask if they want chat
-        chat_mode[uid] = True
-        bot.reply_to(m, "💬 *وضع المحادثة نشط!* أرسل أي شيء وأنا أرد.\nلإيقاف: /chat", parse_mode="Markdown")
+    chat_mode[uid] = True
+    bot.send_chat_action(m.chat.id, "typing")
+    resp = get_ai_response(uid, m.text)
+    if len(resp) > 4000:
+        for i in range(0, len(resp), 3000):
+            bot.reply_to(m, resp[i:i+3000])
+    else:
+        bot.reply_to(m, resp)
 
 # === Unknown command ===
 @bot.message_handler(func=lambda m: m.text and m.text.startswith('/'))
 def unknown(m):
     bot.reply_to(m, WELCOME, parse_mode="Markdown")
 
-# === Cleanup old conversations periodically ===
-def cleanup_loop():
+# === Auto-refresh API keys + cleanup ===
+def background_loop():
+    refresh_keys()  # initial fetch
     while True:
-        time.sleep(3600)
-        now = time.time()
-        # Kept in memory, auto-cleaned on restart anyway
+        time.sleep(3600)  # every hour
+        refresh_keys()
 
 if __name__ == '__main__':
     print(f"YAQEEN Bot v3 — AI Chat + Moroccan Services")
     print(f"Bot: https://t.me/yaqeen_manadger_bot")
     print(f"Groq: {'✅' if GROQ_KEY else '❌'} | GitHub: {'✅' if GITHUB_TOKEN else '❌'} | Google: {'✅' if GOOGLE_KEY else '❌'}")
-    t = threading.Thread(target=cleanup_loop, daemon=True)
+    t = threading.Thread(target=background_loop, daemon=True)
     t.start()
     try:
         bot.polling(non_stop=True, interval=1, timeout=30)

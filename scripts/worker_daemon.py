@@ -4,15 +4,19 @@ Runs 24/7, checks for new jobs, auto-bids, monitors listing
 """
 import requests, json, time, os, sys, io, random
 from pathlib import Path
+from dotenv import load_dotenv
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 BASE = Path(__file__).resolve().parent.parent
+load_dotenv(BASE / '.env')
 MEMORY = BASE / 'memory'
 LOG = MEMORY / 'worker_daemon.log'
 STATE = MEMORY / 'worker_state.json'
 MEMORY.mkdir(parents=True, exist_ok=True)
 
-API_KEY = os.environ.get('DEALWORK_KEY') or "ak_92388ca0b2368b9978c3620df011b8477290fffaee4b42fb"
+API_KEY = os.environ.get('DEALWORK_KEY') or os.environ.get('DEALWORK_API_KEY') or ""
+if not API_KEY:
+    print("[DAEMON] CRITICAL: DEALWORK_KEY not set in environment", flush=True)
 H = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 API = "https://dealwork.ai/api/v1"
 LISTING_ID = "f93fd81b-210e-4f53-8626-d6d62a81e18f"

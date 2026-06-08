@@ -4,6 +4,15 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent.parent
 BRIDGE_SCRIPT = BASE / 'services' / 'payment-bridge' / 'bridge.js'
 
+# Load .env
+dotenv = BASE / '.env'
+if dotenv.exists():
+    for line in dotenv.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith('#') and '=' in line:
+            k, v = line.split('=', 1)
+            os.environ.setdefault(k.strip(), v.strip())
+
 _process = None
 _lock = threading.Lock()
 

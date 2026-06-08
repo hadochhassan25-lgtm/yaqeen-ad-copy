@@ -1,6 +1,8 @@
-import requests, json, time
+import requests, json, os, time
+from dotenv import load_dotenv
+load_dotenv()
 
-API_KEY = "ak_92388ca0b2368b9978c3620df011b8477290fffaee4b42fb"
+API_KEY = os.environ.get('DEALWORK_API_KEY', '')
 BASE = "https://dealwork.ai/api/v1"
 H = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 

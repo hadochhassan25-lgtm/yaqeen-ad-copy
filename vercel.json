@@ -1,18 +1,11 @@
 {
-  "builds": [
-    {
-      "src": "app.py",
-      "use": "@vercel/python",
-      "config": {
-        "runtime": "python3.12",
-        "entrypoint": "app.py"
-      }
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.12"
     }
-  ],
+  },
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "app.py"
-    }
+    { "src": "/api/chat", "dest": "/api/index.py" },
+    { "src": "/", "dest": "/api/index.py" }
   ]
 }
