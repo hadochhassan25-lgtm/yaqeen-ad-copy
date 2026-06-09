@@ -9,6 +9,7 @@ from morocco_knowledge import MoroccoRAG
 
 BASE = Path(__file__).resolve().parent.parent
 RAG = MoroccoRAG()
+GREETING_SENT = set()
 
 # === تحميل المفاتيح من المتغيرات ===
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
@@ -75,53 +76,33 @@ def call_ai(messages):
         except: pass
     return "⚠️ حدث خطأ، حاول مرة أخرى."
 
-SYSTEM_PROMPT = """أنت يقين، ذكاء اصطناعي مغربي احترافي. صممتك شركة منادجر تك.
+SYSTEM_PROMPT = """اسمي يقين. صممني خبير البرمجيات إلياس اللمطي المدير التنفيذي لشركة منادجر تك.
 
-مجالات خبرتك:
-- التاريخ المغربي: الأدارسة، المرابطون، الموحدون، العلويون، الاستعمار، الاستقلال، المسيرة الخضراء
-- الجغرافيا: جميع المدن والجهات والمناطق المغربية
-- الثقافة: الكسكس، الطاجين، البسطيلة، الحريرة، الشاي، اللباس التقليدي، الموسيقى (العيطة، كناوة، الراي)، الأمازيغية
-- الاقتصاد: الفوسفاط، السياحة، الفلاحة، الصناعة، المبادرة الوطنية للتنمية البشرية
-- السياسة: الملك محمد السادس، الدستور، البرلمان، الحكومة
-- الرياضة: المنتخب الوطني، الوداد، الرجاء، الجيش الملكي
-- القانون: مدونة الأسرة، قانون الشغل، الجنسية المغربية
-- التكنولوجيا: الشركات الناشئة، التحول الرقمي في المغرب
+خبرتي في المغرب: التاريخ، الجغرافيا، الثقافة، الاقتصاد، السياسة، الرياضة، القانون، التكنولوجيا، الطبخ، الرياضة، اللهجات، الشخصيات، الأمن، البيئة، المطبخ، الصناعة التقليدية، المدن.
 
-قواعد صارمة:
-1. أجب فقط بنفس لهجة المستخدم بالضبط—انسخ كلماته وأسلوبه:
-   [دارجة بيضاوية] مستخدم: "شنو هي عاصمة المغرب؟" ← رد: "الرباط هي العاصمة، واخا نعرفو بزاف على تاريخها"
-   [دارجة فاسية] مستخدم: "دابا شحال عدد سكان فاس؟" ← رد: "واكا، فاس فيها تقريبا مليون و 200 ألف ساكن، دابا بغيتي تعرف حاجة أخرى؟"
-   [دارجة شمالية] مستخدم: "لابو، يما، كيفاش نمشيو لطنجة؟" ← رد: "واخا لابو، طنجة فيها مطار دولي وقطار البراق، غير سير للمحطة"
-   [دارجة شرقية] مستخدم: "زعمة واش كاين شي فندق فوجدة؟" ← رد: "واو، وجدة فيها بزاف د الفنادق، واش بغيتي شي فندق رخيص ولا غالي?"
-   [دارجة مراكشية] مستخدم: "بزاف د الناس كتهضر على مراكش، شنو رأيك؟" ← رد: "الله يبارك، مراكش مدينة تاريخية، فيها ساحة جامع الفنا، واخا بغيتي تعرف عليها?"
-   [أمازيغية] مستخدم: "ماني لكان؟" ← رد: "لاباس، الله يحفظ. أيتما، شنو بغيتي تعرف؟"
-2. الممنوعات: لا تستخدم "يا أخي"، "يا صديقي"، "أنا"، "نحن"، أو أي كلمات حشو. اذهب مباشرة إلى الجواب
-3. استخدم المعرفة المغربية المقدمة في ردودك
-4. كن دقيقاً في المعلومات ولا تختلق حقائق
-5. لا تكتب أبداً حروفاً من لغات غير العربية (لا روسية، لا صينية، لا إنجليزية)
-6. إذا لم تكن متأكداً، قل ببساطة "لا تتوفر لدي معلومات كافية عن هذا الموضوع"""
+أسلوبي:
+- أرد بنفس لغة المستخدم
+- أبدأ أي رد أول مع شخص جديد بترحيب
+- أذكر إلياس اللمطي بفخر
+- أستخدم معرفتي عن المغرب
+- أكون دقيقاً
 
 def get_reply(uid, msg):
+    is_first = uid not in chat_history
+
     rag_context = RAG.inject(msg)
-    if uid not in chat_history:
+    if is_first:
         system_content = SYSTEM_PROMPT
         if rag_context:
             system_content += rag_context
-        # Few-shot dialect examples (helps model match user's dialect)
-        chat_history[uid] = [
-            {"role":"system","content": system_content},
-            {"role":"user","content":"شنو هي عاصمة المغرب؟"},
-            {"role":"assistant","content":"الرباط هي العاصمة، واخا بغيتي تعرف عليها حاجة أخرى؟"},
-            {"role":"user","content":"واخا عطيني معلومات عليها"},
-            {"role":"assistant","content":"الرباط مدينة قديمة، تأسست فالقرن 12. فيها صومعة حسان والضريح. واخا شنو بغيتي تعرف؟"},
-            {"role":"user","content":"دابا شحال عدد سكانها؟"},
-            {"role":"assistant","content":"واكا، الرباط فيها تقريبا 600 ألف ساكن. بزاف ديال الناس كيسكنو فيها واخا."},
-        ]
+        chat_history[uid] = [{"role":"system","content": system_content}]
     else:
         if rag_context:
             chat_history[uid].append({"role":"system","content": rag_context})
+
     chat_history[uid].append({"role":"user","content":msg})
     resp = call_ai(chat_history[uid])
+
     chat_history[uid].append({"role":"assistant","content":resp})
     history = chat_history[uid]
     chat_history[uid] = [history[0]] + history[-6:] if len(history) > 7 else history
@@ -141,8 +122,19 @@ def api_chat():
         return jsonify({"ok": True})
     data = request.get_json()
     msg = data.get("message", "")
-    uid = request.remote_addr
+    uid = request.headers.get('X-Forwarded-For', request.remote_addr)
     reply = get_reply(uid, msg)
+    # Welcome once per user (tracked by real IP)
+    is_new = uid not in GREETING_SENT
+    if is_new:
+        GREETING_SENT.add(uid)
+    creator_q = "صمم" in msg or "اللمطي" in msg or "إلياس" in msg or "developer" in msg.lower()
+    creator_missing = "اللمطي" not in reply and "إلياس" not in reply
+    # Force greeting for new users (only non-greeting messages) + creator info
+    if is_new:
+        reply = "مرحبا بيك! الله يحفظك. " + reply
+    if creator_q and creator_missing:
+        reply = "صممني خبير البرمجيات والمدير التنفيذي إلياس اللمطي (Iliass Lamti) مؤسس شركة منادجر تك. هو المطور الوحيد لي وسبب وجودي. " + reply
     return jsonify({"reply": reply})
 
 # === Webhook route ===

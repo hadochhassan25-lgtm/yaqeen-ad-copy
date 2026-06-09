@@ -1,0 +1,19 @@
+12: GREETING_SENT = set()
+79: SYSTEM_PROMPT = """اسمي يقين. صممني خبير البرمجيات إلياس اللمطي المدير التنفيذي لشركة منادجر تك.
+90: def get_reply(uid, msg):
+120: def api_chat():
+122:         return jsonify({"ok": True})
+126:     reply = get_reply(uid, msg)
+128:     if uid not in GREETING_SENT:
+129:         GREETING_SENT.add(uid)
+130:         reply = "مرحبا بيك! الله يحفظك. " + reply
+132:     if "صمم" in msg or "اللمطي" in msg or "إلياس" in msg or "developer" in msg.lower():
+133:         if "اللمطي" not in reply and "إلياس" not in reply:
+134:             reply = "صممني خبير البرمجيات والمدير التنفيذي إلياس اللمطي مؤسس شركة منادجر تك. هو المطور الوحيد لي وسبب وجودي. " + reply
+135:     return jsonify({"reply": reply})
+140:     return jsonify({"status":"ok","bot":"YAQEEN"})
+167:             reply = get_reply(uid, text)
+168:             if len(reply) > 4000:
+169:                 for i in range(0, len(reply), 3000):
+170:                     tg_send(chat_id, reply[i:i+3000])
+172:                 tg_send(chat_id, reply)
