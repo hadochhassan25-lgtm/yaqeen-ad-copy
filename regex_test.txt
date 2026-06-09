@@ -1,3 +1,0 @@
-Words: {'صممك؟', 'شكون'}
-Match: False
-Matched: set()
