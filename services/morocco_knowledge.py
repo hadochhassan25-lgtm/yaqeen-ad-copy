@@ -2,7 +2,7 @@
 import re, json, unicodedata
 
 class MoroccoRAG:
-    RAW_STOP_WORDS = {"مغرب","مغربي","مغربية","مغربيات","في","على","من","الى","عن","مع","هو","هي","هم","كان"}
+    RAW_STOP_WORDS = {"في","على","من","الى","عن","مع","هو","هي","هم","كان","هذا","هذه","ذلك","كانت","يكون"}
 
     def __init__(self):
         self.STOP_WORDS = {self._normalize(w) for w in self.RAW_STOP_WORDS}
@@ -10,21 +10,40 @@ class MoroccoRAG:
 
     def search(self, query, top_k=3):
         q = self._normalize(query)
-        q_words = set(q.split())
+        q_words = [w for w in q.split() if w not in self.STOP_WORDS and len(w) > 1]
+        if not q_words:
+            return []
+
         scored = []
         for e in self.entries:
-            kw = e.get("kw", [])
-            matched = 0
-            for k in kw:
-                k_norm = self._normalize(k)
-                for kn_word in k_norm.split():
-                    if kn_word in q_words and kn_word not in self.STOP_WORDS:
-                        matched += 1
-                        break
-            if matched > 0:
-                scored.append((matched, e))
-        scored.sort(key=lambda x: -x[0])
-        return [e for _, e in scored[:top_k]]
+            kw_norm = set()
+            for k in e.get("kw", []):
+                for w in self._normalize(k).split():
+                    kw_norm.add(w)
+            matches = [qw for qw in q_words if qw in kw_norm]
+            if not matches:
+                continue
+            score = sum(1 + (len(m) - 2) * 0.25 for m in matches)
+            entry_len = max(1, len(kw_norm))
+            entry_stop = sum(1 for w in kw_norm if w in self.STOP_WORDS)
+            specificity_bonus = 1 + (len(q_words) / max(1, len(matches))) * 0.2
+            score *= specificity_bonus
+            scored.append((score, e))
+
+        if scored:
+            scored.sort(key=lambda x: -x[0])
+            return [e for _, e in scored[:top_k]]
+
+        for e in self.entries:
+            kw_norm = set()
+            for k in e.get("kw", []):
+                for w in self._normalize(k).split():
+                    kw_norm.add(w)
+            for qw in q_words:
+                if qw in kw_norm:
+                    return [e]
+
+        return []
 
     def inject(self, query):
         results = self.search(query)
@@ -37,23 +56,34 @@ class MoroccoRAG:
 
     @staticmethod
     def _normalize(t):
-        # Arabic normalization
         t = t.lower()
-        t = t.replace("\u0623", "\u0627")  # أ -> ا
-        t = t.replace("\u0625", "\u0627")  # إ -> ا
-        t = t.replace("\u0622", "\u0627")  # آ -> ا
-        t = t.replace("\u0629", "\u0647")  # ة -> ه
-        t = t.replace("\u0649", "\u064a")  # ى -> ي
+        t = t.replace("\u0623", "\u0627").replace("\u0625", "\u0627").replace("\u0622", "\u0627")
+        t = t.replace("\u0629", "\u0647").replace("\u0649", "\u064a")
         t = unicodedata.normalize("NFKD", t)
-        t = re.sub(r"[\u064b-\u065f]", "", t)  # remove tashkeel
+        t = re.sub(r"[\u064b-\u065f]", "", t)
         t = re.sub(r"[^\w\s]", " ", t)
         t = re.sub(r"\s+", " ", t).strip()
-        # strip "ال" prefix for matching
+        AL = "\u0627\u0644"
+        PREFIXES = ["\u0648", "\u0641", "\u0628", "\u0644", "\u0643"]
+        SUFFIXES = ["\u0647\u0645", "\u0647\u0627", "\u0643\u0645", "\u0646\u0627", "\u064a", "\u0647", "\u0643"]
         words = []
         for w in t.split():
-            if w.startswith("\u0627\u0644") and len(w) > 3:
-                words.append(w[2:])
-            words.append(w)
+            if not w:
+                continue
+            if w.startswith(AL) and len(w) > 3:
+                variants = {w[2:]}
+            else:
+                variants = {w}
+            for p in PREFIXES:
+                if w.startswith(p) and len(w) > 2:
+                    s = w[1:]
+                    variants.add(s)
+                    if s.startswith(AL) and len(s) > 3:
+                        variants.add(s[2:])
+            for s in SUFFIXES:
+                if w.endswith(s) and len(w) > len(s) + 1:
+                    variants.add(w[:-len(s)])
+            words.extend(variants)
         return " ".join(words)
 
     def _build_db(self):

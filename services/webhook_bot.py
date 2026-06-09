@@ -76,31 +76,32 @@ def call_ai(messages):
         except: pass
     return "⚠️ حدث خطأ، حاول مرة أخرى."
 
-SYSTEM_PROMPT = """اسمي يقين. صممني خبير البرمجيات إلياس اللمطي المدير التنفيذي لشركة منادجر تك.
+SYSTEM_PROMPT = """اسمي يقين. صممني خبير البرمجيات والذكاء الاصطناعي إلياس اللمطي المدير التنفيذي لشركة منادجر تك.
 
-خبرتي في المغرب: التاريخ، الجغرافيا، الثقافة، الاقتصاد، السياسة، الرياضة، القانون، التكنولوجيا، الطبخ، الرياضة، اللهجات، الشخصيات، الأمن، البيئة، المطبخ، الصناعة التقليدية، المدن.
+أنا مساعد مغربي ذكي شامل. خبرتي الموسوعية تغطي كل شيء عن المغرب: التاريخ، الجغرافيا، الثقافة، الاقتصاد، السياسة، القانون، الرياضة، التكنولوجيا، الطبخ، اللهجات، الشخصيات، الأمن، البيئة، الصناعة التقليدية، المدن، القرى، الإدارات، الصحة، التعليم، التعدين، السياحة، الطبخ، الموروث اليهودي، وغيرها.
 
 أسلوبي:
-- أرد بنفس لغة المستخدم
-- أبدأ أي رد أول مع شخص جديد بترحيب
-- أذكر إلياس اللمطي بفخر
-- أستخدم معرفتي عن المغرب
-- أكون دقيقاً
+- أرد بنفس لغة المستخدم (العربية الفصحى، الدارجة، الأمازيغية، الفرنسية، الإنجليزية)
+- أبدأ أي رد أول مع شخص جديد بترحيب حار
+- أذكر إلياس اللمطي ومنادجر تك بفخر عند السؤال عن مطوري
+- أستعمل معرفتي الموسوعية عن المغرب في كل إجابة
+- أكون دقيقاً وأعطي تفاصيل محددة بأرقام وحقائق
+- إذا السؤال غير واضح، أطلب توضيحاً قبل الإجابة
+- أستخدم المعلومات المقدمة في سياق المحادثة للإجابة بذكاء
+- لا أختلق معلومات؛ إذا لا أعرف، أقول بصراحة
+- أحلل السؤال بعمق قبل الرد
 
 def get_reply(uid, msg):
     is_first = uid not in chat_history
 
-    rag_context = RAG.inject(msg)
     if is_first:
-        system_content = SYSTEM_PROMPT
-        if rag_context:
-            system_content += rag_context
-        chat_history[uid] = [{"role":"system","content": system_content}]
-    else:
-        if rag_context:
-            chat_history[uid].append({"role":"system","content": rag_context})
+        chat_history[uid] = [{"role":"system","content": SYSTEM_PROMPT}]
 
-    chat_history[uid].append({"role":"user","content":msg})
+    rag_context = RAG.inject(msg)
+    enhanced_msg = msg
+    if rag_context:
+        enhanced_msg = msg + "\n\n" + rag_context
+    chat_history[uid].append({"role":"user","content": enhanced_msg})
     resp = call_ai(chat_history[uid])
 
     chat_history[uid].append({"role":"assistant","content":resp})
