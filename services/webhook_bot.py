@@ -38,15 +38,19 @@ def tg_send(chat_id, text, parse_mode=None):
     except: pass
 
 def call_ai(messages):
-    """Try Keyway smart-chat keys, then Groq, then GitHub"""
-    # Keyway keys from env or use built-in
+    if GITHUB_TOKEN:
+        try:
+            d = json.dumps({"model":"gpt-4o-mini","messages":messages,"max_tokens":2048}).encode()
+            req = urllib.request.Request("https://models.inference.ai.azure.com/chat/completions", d,
+                headers={**HDR, "Authorization": f"Bearer {GITHUB_TOKEN}"})
+            resp = urllib.request.urlopen(req, timeout=25)
+            r = json.loads(resp.read())
+            return r["choices"][0]["message"]["content"]
+        except: pass
     keys_env = os.environ.get("KEYWAY_KEYS", "")
     keys = keys_env.split(",") if keys_env else []
     if not keys:
-        keys = [
-            "sk-placeholder1",
-            "sk-placeholder2",
-        ]
+        keys = ["sk-placeholder1", "sk-placeholder2"]
     for k in keys:
         try:
             d = json.dumps({"model":"smart-chat","messages":messages,"max_tokens":2048}).encode()
@@ -65,31 +69,22 @@ def call_ai(messages):
             r = json.loads(resp.read())
             return r["choices"][0]["message"]["content"]
         except: pass
-    if GITHUB_TOKEN:
-        try:
-            d = json.dumps({"model":"gpt-4o-mini","messages":messages,"max_tokens":1024}).encode()
-            req = urllib.request.Request("https://models.inference.ai.azure.com/chat/completions", d,
-                headers={**HDR, "Authorization": f"Bearer {GITHUB_TOKEN}"})
-            resp = urllib.request.urlopen(req, timeout=20)
-            r = json.loads(resp.read())
-            return r["choices"][0]["message"]["content"]
-        except: pass
     return "⚠️ حدث خطأ، حاول مرة أخرى."
 
 SYSTEM_PROMPT = """اسمي يقين. صممني خبير البرمجيات والذكاء الاصطناعي إلياس اللمطي المدير التنفيذي لشركة منادجر تك.
 
-أنا مساعد مغربي ذكي شامل. خبرتي الموسوعية تغطي كل شيء عن المغرب: التاريخ، الجغرافيا، الثقافة، الاقتصاد، السياسة، القانون، الرياضة، التكنولوجيا، الطبخ، اللهجات، الشخصيات، الأمن، البيئة، الصناعة التقليدية، المدن، القرى، الإدارات، الصحة، التعليم، التعدين، السياحة، الطبخ، الموروث اليهودي، وغيرها.
+أنا مساعد مغربي فائق الذكاء. خبرتي الموسوعية تغطي كل شيء عن المغرب.
 
-أسلوبي:
-- أرد بنفس لغة المستخدم (العربية الفصحى، الدارجة، الأمازيغية، الفرنسية، الإنجليزية)
-- أبدأ أي رد أول مع شخص جديد بترحيب حار
-- أذكر إلياس اللمطي ومنادجر تك بفخر عند السؤال عن مطوري
-- أستعمل معرفتي الموسوعية عن المغرب في كل إجابة
-- أكون دقيقاً وأعطي تفاصيل محددة بأرقام وحقائق
-- إذا السؤال غير واضح، أطلب توضيحاً قبل الإجابة
-- أستخدم المعلومات المقدمة في سياق المحادثة للإجابة بذكاء
-- لا أختلق معلومات؛ إذا لا أعرف، أقول بصراحة
-- أحلل السؤال بعمق قبل الرد
+قواعد عملي:
+- أرد بنفس لغة المستخدم (العربية، الدارجة، الأمازيغية، الفرنسية، الإنجليزية)
+- أستخدم المعرفة المغربية المرفقة في رسالة المستخدم بالضرورة — هي مصدر معلوماتي عن المغرب
+- أحلل السؤال تحليلاً عميقاً: أستخرج الموضوع، اللهجة، المطلوب بالضبط
+- أعطي إجابات مفصلة دقيقة بأرقام وحقائق من المعرفة المرفقة
+- إذا كان السؤال معقداً، أفكر خطوة بخطوة قبل الرد
+- لا أختلق معلومات أبداً
+- إذا السؤال عن القانون أو الإجراءات، أعطي الخطوات العملية
+- أبدأ مع كل شخص جديد بترحيب حار
+- أذكر إلياس اللمطي ومنادجر تك عند السؤال عن مطوري
 
 def get_reply(uid, msg):
     is_first = uid not in chat_history

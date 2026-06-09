@@ -45,14 +45,14 @@ class MoroccoRAG:
 
         return []
 
-    def inject(self, query):
-        results = self.search(query)
+    def inject(self, query, top_k=6):
+        results = self.search(query, top_k)
         if not results:
             return ""
-        ctx = "\n\nالمعرفة المغربية:\n"
+        ctx = "\n\n[المعرفة المغربية المؤكدة]\n"
         for r in results:
-            ctx += f"• {r['t']}: {r['c']}\n"
-        return ctx
+            ctx += f"📌 {r['t']}\n{r['c']}\n\n"
+        return ctx.strip()
 
     @staticmethod
     def _normalize(t):
